@@ -17,6 +17,7 @@ import {
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
+import LottieView from "lottie-react-native";
 import { useTranslation } from "react-i18next";
 import {
   uploadAbhaCard,
@@ -468,8 +469,11 @@ export default function AuthChoiceScreen({ navigation, route }) {
             contentContainerStyle={styles.container}
             keyboardShouldPersistTaps="handled"
           >
+            
+          
+
             <Text style={styles.title}>{t("auth.doctor_login_title")}</Text>
-            <Text style={styles.subtitle}>{t("auth.choose_signin")}</Text>
+           
 
             <View style={styles.tabRow}>
               <Pressable
@@ -553,9 +557,9 @@ export default function AuthChoiceScreen({ navigation, route }) {
               </View>
             ) : (
               <View style={styles.sectionCard}>
-                <Text style={styles.sectionTitle}>{t("auth.mobile_otp_title")}</Text>
+                <Text style={styles.sectionTitle}>Mobile OTP</Text>
                 <Text style={styles.sectionSubtitle}>
-                  {t("auth.mobile_otp_subtitle")}
+                  Fast fallback when username is not handy.
                 </Text>
 
                 <View style={styles.field}>
@@ -634,6 +638,16 @@ export default function AuthChoiceScreen({ navigation, route }) {
               >
                 <Text style={styles.footerLink}>{t("auth.register_here")}</Text>
               </Pressable>
+            </View>
+            <View style={styles.doctorHeroAnimationWrap}>
+                <LottieView
+                  source={require("../../assets/Medical_Frontliners.json")}
+                  autoPlay
+                  loop
+                  style={styles.doctorHeroAnimation}
+                />
+              
+              
             </View>
           </ScrollView>
           {languageMenuOpen && (
@@ -1229,6 +1243,49 @@ const styles = StyleSheet.create({
     paddingVertical: 32,
     justifyContent: "center",
   },
+  doctorHeroCard: {
+    marginBottom: 12,
+    borderRadius: 22,
+    padding: 16,
+    backgroundColor: "#F5FBFF",
+    borderWidth: 1,
+    borderColor: "#DDEAF5",
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.08,
+    shadowRadius: 18,
+    elevation: 3,
+  },
+  doctorHeroAnimationWrap: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 10,
+  },
+  doctorHeroAnimation: {
+    width: "100%",
+    height: 260,
+  },
+  doctorHeroCopy: {
+    gap: 4,
+  },
+  doctorHeroEyebrow: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#0F766E",
+    letterSpacing: 1,
+    textTransform: "uppercase",
+  },
+  doctorHeroTitle: {
+    fontSize: 17,
+    fontWeight: "800",
+    color: "#0F172A",
+    lineHeight: 24,
+  },
+  doctorHeroSubtitle: {
+    fontSize: 14,
+    color: "#475569",
+    lineHeight: 20,
+  },
   patientContainer: {
     flexGrow: 1,
     paddingHorizontal: 24,
@@ -1239,6 +1296,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "700",
     color: "#1F2937",
+    textAlign: "center",
   },
   subtitle: {
     marginTop: 6,
