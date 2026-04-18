@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { AuthContext } from "../context/AuthContext";
@@ -23,12 +23,14 @@ import {
   Easing,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import { assess, buildPatientInputsFromProfile } from "../services/ruleEngine";
+import { normalizeAncInputs, riskTone, statusLabel } from "../services/ancAssessment";
 
 const quickActions = [
-  { title: "Talk to Doctor", icon: "TD" },
-  { title: "Health Records", icon: "HR" },
-  { title: "Find Medicine", icon: "FM" },
-  { title: "Call with Ai", icon: "AI" },
+  { title: "Talk to Doctor", icon: "message-square", color: "#5DC1B9", route: "Chat" },
+  { title: "Health Records", icon: "file-text", color: "#F97316", route: "HealthRecords" },
+  { title: "Find Medicine", icon: "package", color: "#6366F1", route: "MedicineRecords" },
+  { title: "Call with Ai", icon: "mic", color: "#EC4899", route: "VapiCall" },
 ];
 
 const bottomNavItems = [
@@ -37,6 +39,16 @@ const bottomNavItems = [
   { label: "Records", icon: "file-text", route: "HealthRecords" },
   { label: "Profile", icon: "user", route: "PatientProfile" },
 ];
+
+function badgeStyles(tone) {
+  if (tone === "high") {
+    return { wrap: { backgroundColor: "#FEE2E2" }, text: { color: "#DC2626" } };
+  }
+  if (tone === "medium") {
+    return { wrap: { backgroundColor: "#FEF3C7" }, text: { color: "#B45309" } };
+  }
+  return { wrap: { backgroundColor: "#DCFCE7" }, text: { color: "#15803D" } };
+}
 
 export default function PatientDashboardMock() {
   const navigation = useNavigation();
@@ -53,22 +65,34 @@ export default function PatientDashboardMock() {
   const [assigning, setAssigning] = useState(false);
   const [searching, setSearching] = useState(false);
   const [selectedAsha, setSelectedAsha] = useState(null);
+  const [ancInputs, setAncInputs] = useState(null);
+  const [ancDirty, setAncDirty] = useState(false);
   const pulse = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    let isMounted = true;
     const loadProfile = async () => {
       if (!token) return;
       try {
         const data = await patientMe(token);
-        setProfile(data || null);
+        if (isMounted) setProfile(data || null);
       } catch (error) {
-        setProfile(null);
+        if (isMounted) setProfile(null);
       }
     };
     loadProfile();
+    return () => {
+      isMounted = false;
+    };
   }, [token]);
 
   const activeUser = profile || user;
+
+  useEffect(() => {
+    if (!ancDirty) {
+      setAncInputs(buildPatientInputsFromProfile(activeUser || {}));
+    }
+  }, [activeUser, ancDirty]);
 
   useEffect(() => {
     const loadDoctors = async () => {
@@ -102,37 +126,41 @@ export default function PatientDashboardMock() {
       animation.start();
     }
     return () => {
-      if (animation) {
-        animation.stop();
-      }
+      if (animation) animation.stop();
     };
   }, [searching, pulse]);
 
+  const normalizedAncInputs = useMemo(() => normalizeAncInputs(ancInputs || {}), [ancInputs]);
+  const dashboardAssessment = useMemo(() => assess(normalizedAncInputs), [normalizedAncInputs]);
+  const currentRiskTone = riskTone(dashboardAssessment.riskBand);
+  const currentBadge = badgeStyles(currentRiskTone);
+
   const firstName =
     activeUser?.abha_profile?.firstName ||
-    activeUser?.name ||
-    activeUser?.fullName ||
+    activeUser?.name?.split(" ")[0] ||
     "Friend";
 
-  const gender = activeUser?.abha_profile?.gender || activeUser?.gender || "M";
+  const gender = activeUser?.abha_profile?.gender || activeUser?.gender || "F";
   const avatarSource =
     gender === "F"
       ? require("../../assets/female-icon.png")
       : require("../../assets/male-icon.png");
 
-  const handleVapiCall = () => {
-    navigation.navigate("VapiCall");
-  };
+  const supportName =
+    activeUser?.anmWorker?.name ||
+    activeUser?.supportName ||
+    activeUser?.ashaWorker?.name ||
+    null;
+
+  const isHighRisk =
+    dashboardAssessment.riskBand === "HIGH" ||
+    dashboardAssessment.riskBand === "EMERGENCY" ||
+    activeUser?.cdssSummary?.latestRiskLevel === "HIGH";
 
   const handleLogout = () => {
     setMenuOpen(false);
     signOut();
     navigation.reset({ index: 0, routes: [{ name: "RoleSelection" }] });
-  };
-
-  const handleOpenProfile = () => {
-    setMenuOpen(false);
-    navigation.navigate("PatientProfile");
   };
 
   const loadAshaWorkers = async () => {
@@ -193,24 +221,14 @@ export default function PatientDashboardMock() {
     }
   };
 
-  const openDoctorModal = (doctor) => {
-    setSelectedDoctor(doctor);
-    setDoctorModalOpen(true);
-  };
-
   const closeDoctorModal = () => {
     setDoctorModalOpen(false);
     setSelectedDoctor(null);
   };
 
-  const supportName =
-    activeUser?.anmWorker?.name ||
-    activeUser?.supportName ||
-    activeUser?.ashaWorker?.name ||
-    null;
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <View>
             <Text style={styles.greetingSmall}>Good Morning,</Text>
@@ -222,34 +240,101 @@ export default function PatientDashboardMock() {
               activeOpacity={0.7}
               onPress={() => setMenuOpen((prev) => !prev)}
             >
-              <Image
-                source={avatarSource}
-                style={styles.headerAvatar}
-                resizeMode="contain"
-              />
+              <Image source={avatarSource} style={styles.headerAvatar} resizeMode="contain" />
             </TouchableOpacity>
             {menuOpen && (
               <View style={styles.avatarMenu}>
                 <TouchableOpacity
                   style={styles.menuItem}
-                  activeOpacity={0.7}
-                  onPress={handleOpenProfile}
+                  onPress={() => {
+                    setMenuOpen(false);
+                    navigation.navigate("PatientProfile");
+                  }}
                 >
-                  <Text style={styles.menuText}>View Profile</Text>
+                  <Feather name="user" size={16} color="#4B5563" style={{ marginRight: 8 }} />
+                  <Text style={styles.menuText}>Profile</Text>
                 </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.menuItem, styles.menuItemDanger]}
-                  activeOpacity={0.7}
-                  onPress={handleLogout}
-                >
-                  <Text style={[styles.menuText, styles.menuTextDanger]}>
-                    Logout
-                  </Text>
+                <TouchableOpacity style={[styles.menuItem, styles.menuItemDanger]} onPress={handleLogout}>
+                  <Feather name="log-out" size={16} color="#DC2626" style={{ marginRight: 8 }} />
+                  <Text style={[styles.menuText, styles.menuTextDanger]}>Logout</Text>
                 </TouchableOpacity>
               </View>
             )}
           </View>
         </View>
+
+        {activeUser?.pregnancyDetails?.currentlyPregnant && (
+          <>
+            <Pressable
+              style={[styles.statusBanner, isHighRisk && styles.statusBannerHigh]}
+              onPress={() => navigation.navigate("HealthRecords")}
+            >
+              <View style={styles.statusContent}>
+                <View style={styles.statusIconWrap}>
+                  <Feather name="heart" size={24} color={isHighRisk ? "#DC2626" : "#5DC1B9"} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.statusTitle}>Pregnancy Status</Text>
+                  <Text style={styles.statusSubtitle}>
+                    Week {normalizedAncInputs.gestationalWeekage || activeUser.pregnancyDetails.gestationalAgeWeeks} · {statusLabel(dashboardAssessment)}
+                  </Text>
+                  <Text style={styles.statusCaption}>
+                    {dashboardAssessment.decision} · Next visit {dashboardAssessment.nextVisitWeeks === 0 ? "Now" : `${dashboardAssessment.nextVisitWeeks}w`}
+                  </Text>
+                </View>
+                <Feather name="chevron-right" size={20} color="#94A3B8" />
+              </View>
+            </Pressable>
+
+            <View style={styles.predictionCard}>
+              <View style={styles.predictionHeader}>
+                <View>
+                  <Text style={styles.predictionEyebrow}>Home ANC Prediction</Text>
+                  <Text style={styles.predictionTitle}>{statusLabel(dashboardAssessment)}</Text>
+                </View>
+                <View style={[styles.predictionBadge, currentBadge.wrap]}>
+                  <Text style={[styles.predictionBadgeText, currentBadge.text]}>Score {dashboardAssessment.score}</Text>
+                </View>
+              </View>
+
+              <Text style={styles.predictionSummary}>
+                This risk summary is calculated from the patient's saved ANC data and previous records.
+              </Text>
+
+              <View style={styles.predictionMetaRow}>
+                <View style={styles.predictionMetaCard}>
+                  <Text style={styles.predictionMetaLabel}>Decision</Text>
+                  <Text style={styles.predictionMetaValue}>{dashboardAssessment.decision}</Text>
+                </View>
+                <View style={styles.predictionMetaCard}>
+                  <Text style={styles.predictionMetaLabel}>Referral</Text>
+                  <Text style={styles.predictionMetaValue}>{dashboardAssessment.referralLevel}</Text>
+                </View>
+              </View>
+
+              {dashboardAssessment.reasons?.length > 0 ? (
+                <View style={styles.reasonsWrap}>
+                  {dashboardAssessment.reasons.slice(0, 4).map((reason, index) => (
+                    <View key={`${reason}-${index}`} style={styles.reasonRow}>
+                      <Feather
+                        name={currentRiskTone === "high" ? "alert-triangle" : "check-circle"}
+                        size={14}
+                        color={currentRiskTone === "high" ? "#DC2626" : currentRiskTone === "medium" ? "#B45309" : "#15803D"}
+                      />
+                      <Text style={styles.reasonText}>{reason}</Text>
+                    </View>
+                  ))}
+                </View>
+              ) : null}
+
+              <View style={styles.homeActionRow}>
+                <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.navigate("HealthRecords")}>
+                  <Text style={styles.primaryButtonText}>Open Full Records</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </>
+        )}
 
         <Text style={styles.sectionTitle}>Quick Actions</Text>
         <View style={styles.quickGrid}>
@@ -258,28 +343,10 @@ export default function PatientDashboardMock() {
               key={item.title}
               style={styles.quickCard}
               activeOpacity={0.8}
-              onPress={() => {
-                if (item.title === "Talk to Doctor") {
-                  navigation.navigate("Chat");
-                  return;
-                }
-                if (item.title === "Health Records") {
-                  navigation.navigate("HealthRecords");
-                  return;
-                }
-                if (item.title === "Call with Ai") {
-                  handleVapiCall();
-                  return;
-                }
-                if (item.title === "Find Medicine") {
-                  navigation.navigate("MedicineRecords");
-                  return;
-                }
-                Alert.alert("Quick Action", `${item.title} tapped`);
-              }}
+              onPress={() => navigation.navigate(item.route)}
             >
-              <View style={styles.quickIconCircle}>
-                <Text style={styles.quickIconText}>{item.icon}</Text>
+              <View style={[styles.quickIconCircle, { backgroundColor: `${item.color}15` }]}>
+                <Feather name={item.icon} size={24} color={item.color} />
               </View>
               <Text style={styles.quickTitle}>{item.title}</Text>
             </TouchableOpacity>
@@ -287,111 +354,78 @@ export default function PatientDashboardMock() {
         </View>
 
         <View style={styles.sectionRow}>
-          <Text style={styles.sectionTitle}>Popular Doctors</Text>
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={() => Alert.alert("Doctors", "See all doctors tapped")}
-          >
+          <Text style={styles.sectionTitle}>Nearby Doctors</Text>
+          <TouchableOpacity onPress={() => Alert.alert("Doctors", "See all doctors tapped")}>
             <Text style={styles.sectionLink}>See All</Text>
           </TouchableOpacity>
         </View>
-        <View style={styles.doctorRow}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.doctorScroll}>
           {doctors.map((doctor) => (
             <TouchableOpacity
               key={doctor._id}
               style={styles.doctorCard}
-              activeOpacity={0.8}
-              onPress={() => openDoctorModal(doctor)}
+              onPress={() => {
+                setSelectedDoctor(doctor);
+                setDoctorModalOpen(true);
+              }}
             >
               <View style={styles.doctorAvatarWrap}>
-                <Image
-                  source={require("../../assets/male-doctor-icon.png")}
-                  style={styles.doctorAvatar}
-                />
+                <Image source={require("../../assets/male-doctor-icon.png")} style={styles.doctorAvatar} />
               </View>
-              <Text style={styles.doctorName}>{doctor.name}</Text>
-              <Text style={styles.doctorMeta}>
-                {doctor.hospitalName || "Nearby Doctor"}
-              </Text>
-              <Text style={styles.doctorRating}>
-                {doctor.distanceKm} km away
-              </Text>
+              <Text style={styles.doctorName} numberOfLines={1}>{doctor.name}</Text>
+              <Text style={styles.doctorMeta} numberOfLines={1}>{doctor.hospitalName || "Nearby Clinic"}</Text>
+              <View style={styles.doctorDistTag}>
+                <Text style={styles.doctorDistText}>{doctor.distanceKm} km</Text>
+              </View>
             </TouchableOpacity>
           ))}
-        </View>
+        </ScrollView>
 
         <Text style={styles.sectionTitle}>Local Support</Text>
         <View style={styles.supportCard}>
           <View style={styles.supportIcon}>
-            <Feather name="map-pin" size={18} color="#5DC1B9" />
+            <Image source={require("../../assets/female-icon.png")} style={{ width: 28, height: 28 }} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.supportName}>
-              {supportName || "Not connected"}
-            </Text>
-            <Text style={styles.supportRole}>
-              {supportName ? "ASHA Worker" : "Connect to an ASHA worker"}
-            </Text>
+            <Text style={styles.supportName}>{supportName || "Find Support"}</Text>
+            <Text style={styles.supportRole}>{supportName ? "ANM Worker" : "Connect with nearby ASHA worker"}</Text>
           </View>
-          <TouchableOpacity
-            style={styles.supportAction}
-            activeOpacity={0.7}
-            onPress={openAshaModal}
-          >
-            <Feather name="user-plus" size={18} color="#0F172A" />
+          <TouchableOpacity style={styles.supportAction} onPress={openAshaModal}>
+            <Feather name={supportName ? "phone" : "user-plus"} size={18} color="#5DC1B9" />
           </TouchableOpacity>
         </View>
-        <TouchableOpacity
-          style={styles.connectButton}
-          activeOpacity={0.8}
-          onPress={openAshaModal}
-        >
+
+        <TouchableOpacity style={styles.connectButton} activeOpacity={0.8} onPress={openAshaModal}>
           <Text style={styles.connectButtonText}>
-            {supportName ? "Change ASHA Worker" : "Connect to ASHA Worker"}
+            {supportName ? "Change Support Contact" : "Connect to ASHA Worker"}
           </Text>
         </TouchableOpacity>
       </ScrollView>
 
       <View style={styles.bottomNav}>
-        {bottomNavItems.map((item, index) => {
+        {bottomNavItems.map((item) => {
           const isActive = item.label === "Home";
           return (
             <TouchableOpacity
               key={item.label}
               style={styles.navItem}
               onPress={() => {
-                if (item.route) {
-                  navigation.navigate(item.route);
-                }
+                if (item.route) navigation.navigate(item.route);
               }}
             >
-              <Feather
-                name={item.icon}
-                size={22}
-                color={isActive ? "#0F172A" : "#94A3B8"}
-              />
-              <Text style={[styles.navLabel, isActive && styles.navLabelActive]}>
-                {item.label}
-              </Text>
+              <Feather name={item.icon} size={22} color={isActive ? "#0F172A" : "#94A3B8"} />
+              <Text style={[styles.navLabel, isActive && styles.navLabelActive]}>{item.label}</Text>
             </TouchableOpacity>
           );
         })}
       </View>
 
-      <Modal
-        visible={ashaModalOpen}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setAshaModalOpen(false)}
-      >
+      <Modal visible={ashaModalOpen} transparent animationType="slide" onRequestClose={() => setAshaModalOpen(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>ASHA Workers Nearby</Text>
-              <TouchableOpacity
-                style={styles.modalClose}
-                onPress={() => setAshaModalOpen(false)}
-              >
+              <TouchableOpacity style={styles.modalClose} onPress={() => setAshaModalOpen(false)}>
                 <Feather name="x" size={18} color="#0F172A" />
               </TouchableOpacity>
             </View>
@@ -407,17 +441,12 @@ export default function PatientDashboardMock() {
             ) : (
               <ScrollView style={styles.modalList}>
                 {ashaWorkers.map((worker) => {
-                  const distance = calcDistanceKm(
-                    activeUser?.locationCoordinates,
-                    worker.locationCoordinates
-                  );
+                  const distance = calcDistanceKm(activeUser?.locationCoordinates, worker.locationCoordinates);
                   return (
                     <View key={worker._id} style={styles.workerCard}>
                       <View style={{ flex: 1 }}>
                         <Text style={styles.workerName}>{worker.name}</Text>
-                        <Text style={styles.workerMeta}>
-                          @{worker.username}
-                        </Text>
+                        <Text style={styles.workerMeta}>@{worker.username}</Text>
                         <Text style={styles.workerMeta}>
                           {distance ? `${distance.toFixed(1)} km away` : "Nearby"}
                         </Text>
@@ -428,10 +457,7 @@ export default function PatientDashboardMock() {
                         onPress={() => handleConnectAsha(worker)}
                       >
                         <Text style={styles.workerButtonText}>
-                          {assigning &&
-                          selectedAsha?._id === worker._id
-                            ? "Connecting..."
-                            : "Connect"}
+                          {assigning && selectedAsha?._id === worker._id ? "Connecting..." : "Connect"}
                         </Text>
                       </TouchableOpacity>
                     </View>
@@ -443,17 +469,9 @@ export default function PatientDashboardMock() {
         </View>
       </Modal>
 
-      <Modal
-        visible={doctorModalOpen}
-        transparent
-        animationType="slide"
-        onRequestClose={closeDoctorModal}
-      >
+      <Modal visible={doctorModalOpen} transparent animationType="slide" onRequestClose={closeDoctorModal}>
         <Pressable style={styles.modalOverlay} onPress={closeDoctorModal}>
-          <Pressable
-            style={styles.doctorSheet}
-            onPress={(event) => event.stopPropagation()}
-          >
+          <Pressable style={styles.doctorSheet} onPress={(event) => event.stopPropagation()}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Doctor Snapshot</Text>
               <TouchableOpacity style={styles.modalClose} onPress={closeDoctorModal}>
@@ -464,21 +482,12 @@ export default function PatientDashboardMock() {
               <>
                 <View style={styles.sheetHeader}>
                   <View style={styles.sheetAvatarWrap}>
-                    <Image
-                      source={require("../../assets/male-doctor-icon.png")}
-                      style={styles.sheetAvatar}
-                    />
+                    <Image source={require("../../assets/male-doctor-icon.png")} style={styles.sheetAvatar} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.sheetName}>
-                      {selectedDoctor.name || "Doctor"}
-                    </Text>
-                    <Text style={styles.sheetMeta}>
-                      {selectedDoctor.specialization || "General Practice"}
-                    </Text>
-                    <Text style={styles.sheetMeta}>
-                      {selectedDoctor.hospitalName || "Nearby Hospital"}
-                    </Text>
+                    <Text style={styles.sheetName}>{selectedDoctor.name || "Doctor"}</Text>
+                    <Text style={styles.sheetMeta}>{selectedDoctor.specialization || "General Practice"}</Text>
+                    <Text style={styles.sheetMeta}>{selectedDoctor.hospitalName || "Nearby Hospital"}</Text>
                   </View>
                 </View>
 
@@ -486,38 +495,29 @@ export default function PatientDashboardMock() {
                   <View style={styles.sheetStatCard}>
                     <Text style={styles.sheetStatLabel}>Distance</Text>
                     <Text style={styles.sheetStatValue}>
-                      {selectedDoctor.distanceKm
-                        ? `${selectedDoctor.distanceKm} km`
-                        : "Nearby"}
+                      {selectedDoctor.distanceKm ? `${selectedDoctor.distanceKm} km` : "Nearby"}
                     </Text>
                   </View>
                   <View style={styles.sheetStatCard}>
                     <Text style={styles.sheetStatLabel}>Experience</Text>
                     <Text style={styles.sheetStatValue}>
-                      {selectedDoctor.experienceYears
-                        ? `${selectedDoctor.experienceYears}+ yrs`
-                        : "—"}
+                      {selectedDoctor.experienceYears ? `${selectedDoctor.experienceYears}+ yrs` : "-"}
                     </Text>
                   </View>
                 </View>
 
                 <View style={styles.sheetRow}>
                   <Text style={styles.sheetRowLabel}>Availability</Text>
-                  <Text style={styles.sheetRowValue}>
-                    {selectedDoctor.availability || "Check schedule"}
-                  </Text>
+                  <Text style={styles.sheetRowValue}>{selectedDoctor.availability || "Check schedule"}</Text>
                 </View>
                 {selectedDoctor.phoneNumber ? (
                   <View style={styles.sheetRow}>
                     <Text style={styles.sheetRowLabel}>Phone</Text>
-                    <Text style={styles.sheetRowValue}>
-                      {selectedDoctor.phoneNumber}
-                    </Text>
+                    <Text style={styles.sheetRowValue}>{selectedDoctor.phoneNumber}</Text>
                   </View>
                 ) : null}
 
-                {Array.isArray(selectedDoctor.languages) &&
-                selectedDoctor.languages.length ? (
+                {Array.isArray(selectedDoctor.languages) && selectedDoctor.languages.length ? (
                   <>
                     <Text style={styles.sheetSectionTitle}>Languages</Text>
                     <View style={styles.sheetPillRow}>
@@ -547,39 +547,24 @@ export default function PatientDashboardMock() {
         </Pressable>
       </Modal>
 
-
       <Modal visible={searching} transparent animationType="fade">
         <View style={styles.searchOverlay}>
           <View style={styles.searchCard}>
             <Text style={styles.searchTitle}>Locating ASHA Worker</Text>
             <Text style={styles.searchSubtitle}>
-              {selectedAsha?.name
-                ? `Connecting to ${selectedAsha.name}`
-                : "Searching nearby on the map"}
+              {selectedAsha?.name ? `Connecting to ${selectedAsha.name}` : "Searching nearby on the map"}
             </Text>
             <View style={styles.searchMap}>
               <View style={styles.mapGridLine} />
               <View style={[styles.mapGridLine, styles.mapGridLineAlt]} />
               <View style={styles.mapGridLineVertical} />
-              <View
-                style={[styles.mapGridLineVertical, styles.mapGridLineAlt]}
-              />
+              <View style={[styles.mapGridLineVertical, styles.mapGridLineAlt]} />
               <Animated.View
                 style={[
                   styles.mapPulse,
                   {
-                    opacity: pulse.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [0.6, 0],
-                    }),
-                    transform: [
-                      {
-                        scale: pulse.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [0.6, 2.4],
-                        }),
-                      },
-                    ],
+                    opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.6, 0] }),
+                    transform: [{ scale: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.6, 2.4] }) }],
                   },
                 ]}
               />
@@ -629,8 +614,278 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
   },
   headerAvatar: {
-    width: 34,
-    height: 34,
+    width: 32,
+    height: 32,
+  },
+  statusBanner: {
+    marginTop: 18,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 22,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: "#E6EEF0",
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.06,
+    shadowRadius: 16,
+    elevation: 4,
+  },
+  statusBannerHigh: {
+    borderColor: "#FEE2E2",
+    backgroundColor: "#FEF2F2",
+  },
+  statusContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+  },
+  statusIconWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: "#F0FBFA",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  statusTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#1F2937",
+  },
+  statusSubtitle: {
+    marginTop: 4,
+    fontSize: 13,
+    color: "#6B7280",
+  },
+  statusCaption: {
+    marginTop: 4,
+    fontSize: 12,
+    color: "#475569",
+    fontWeight: "600",
+  },
+  predictionCard: {
+    marginTop: 16,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 22,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: "#E6EEF0",
+  },
+  predictionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: 12,
+  },
+  predictionEyebrow: {
+    fontSize: 11,
+    color: "#64748B",
+    textTransform: "uppercase",
+    fontWeight: "800",
+    letterSpacing: 0.8,
+  },
+  predictionTitle: {
+    marginTop: 4,
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#0F172A",
+  },
+  predictionBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+  },
+  predictionBadgeHigh: {
+    backgroundColor: "#FEE2E2",
+  },
+  predictionBadgeMedium: {
+    backgroundColor: "#FEF3C7",
+  },
+  predictionBadgeLow: {
+    backgroundColor: "#DCFCE7",
+  },
+  predictionBadgeText: {
+    fontSize: 12,
+    fontWeight: "800",
+  },
+  predictionSummary: {
+    marginTop: 10,
+    fontSize: 13,
+    lineHeight: 19,
+    color: "#475569",
+  },
+  predictionMetaRow: {
+    marginTop: 14,
+    flexDirection: "row",
+    gap: 10,
+  },
+  predictionMetaCard: {
+    flex: 1,
+    backgroundColor: "#F8FAFC",
+    borderRadius: 14,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+  predictionMetaLabel: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: "#94A3B8",
+    textTransform: "uppercase",
+  },
+  predictionMetaValue: {
+    marginTop: 6,
+    fontSize: 13,
+    color: "#0F172A",
+    fontWeight: "700",
+  },
+  homeFormGrid: {
+    marginTop: 16,
+    gap: 10,
+  },
+  homeInputCard: {
+    backgroundColor: "#F8FAFC",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    padding: 12,
+  },
+  homeInputLabel: {
+    fontSize: 12,
+    color: "#475569",
+    fontWeight: "700",
+  },
+  homeInput: {
+    marginTop: 8,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 15,
+    color: "#0F172A",
+  },
+  homeSectionLabel: {
+    marginTop: 16,
+    fontSize: 13,
+    color: "#475569",
+    fontWeight: "800",
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+  },
+  optionRow: {
+    marginTop: 10,
+    flexDirection: "row",
+    gap: 8,
+  },
+  optionPill: {
+    minWidth: 54,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 999,
+    backgroundColor: "#F1F5F9",
+    alignItems: "center",
+  },
+  optionPillActive: {
+    backgroundColor: "#0F172A",
+  },
+  optionPillText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#475569",
+  },
+  optionPillTextActive: {
+    color: "#FFFFFF",
+  },
+  toggleWrap: {
+    marginTop: 10,
+    gap: 10,
+  },
+  toggleRow: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  toggleRowActive: {
+    backgroundColor: "#ECFDF5",
+    borderColor: "#86EFAC",
+  },
+  toggleText: {
+    flex: 1,
+    fontSize: 14,
+    color: "#0F172A",
+    fontWeight: "600",
+  },
+  toggleTextActive: {
+    color: "#166534",
+  },
+  toggleBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: "#E2E8F0",
+  },
+  toggleBadgeActive: {
+    backgroundColor: "#16A34A",
+  },
+  toggleBadgeText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#334155",
+  },
+  toggleBadgeTextActive: {
+    color: "#FFFFFF",
+  },
+  reasonsWrap: {
+    marginTop: 14,
+    gap: 8,
+  },
+  reasonRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+  },
+  reasonText: {
+    flex: 1,
+    fontSize: 12,
+    color: "#334155",
+    lineHeight: 18,
+    fontWeight: "500",
+  },
+  homeActionRow: {
+    marginTop: 18,
+    flexDirection: "row",
+    gap: 10,
+  },
+  secondaryButton: {
+    flex: 1,
+    backgroundColor: "#E2E8F0",
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: "center",
+  },
+  secondaryButtonText: {
+    color: "#0F172A",
+    fontWeight: "700",
+  },
+  primaryButton: {
+    flex: 1,
+    backgroundColor: "#0F172A",
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: "center",
+  },
+  primaryButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "700",
   },
   avatarMenuWrap: {
     alignItems: "flex-end",
@@ -652,6 +907,8 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   menuItem: {
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
@@ -695,13 +952,15 @@ const styles = StyleSheet.create({
   quickCard: {
     width: "48%",
     backgroundColor: "#FFFFFF",
-    borderRadius: 20,
-    paddingVertical: 18,
+    borderRadius: 22,
+    paddingVertical: 22,
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#EEF2F6",
     shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.06,
-    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.05,
+    shadowRadius: 18,
     elevation: 3,
   },
   quickIconCircle: {
@@ -712,11 +971,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  quickIconText: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#5DC1B9",
-  },
   quickTitle: {
     marginTop: 12,
     fontSize: 15,
@@ -724,9 +978,61 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     textAlign: "center",
   },
-  doctorRow: {
-    flexDirection: "row",
-    gap: 14,
+  doctorScroll: {
+    paddingRight: 20,
+    paddingBottom: 4,
+  },
+  doctorCard: {
+    width: 140,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 22,
+    padding: 14,
+    marginRight: 14,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#EEF2F6",
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.06,
+    shadowRadius: 14,
+    elevation: 3,
+  },
+  doctorAvatarWrap: {
+    width: 78,
+    height: 78,
+    borderRadius: 39,
+    backgroundColor: "#F3F5F7",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 10,
+  },
+  doctorAvatar: {
+    width: 56,
+    height: 56,
+  },
+  doctorName: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#1F2937",
+    textAlign: "center",
+  },
+  doctorMeta: {
+    marginTop: 4,
+    fontSize: 13,
+    color: "#6B7280",
+    textAlign: "center",
+  },
+  doctorDistTag: {
+    marginTop: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    backgroundColor: "#E8F6F4",
+    borderRadius: 8,
+  },
+  doctorDistText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#5DC1B9",
   },
   supportCard: {
     marginTop: 12,
@@ -776,109 +1082,12 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontWeight: "700",
   },
-  doctorCard: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 20,
-    paddingVertical: 18,
-    paddingHorizontal: 12,
-    alignItems: "center",
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.06,
-    shadowRadius: 14,
-    elevation: 3,
-  },
-  doctorAvatarWrap: {
-    width: 78,
-    height: 78,
-    borderRadius: 39,
-    backgroundColor: "#F3F5F7",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 10,
-  },
-  doctorAvatar: {
-    width: 56,
-    height: 56,
-  },
-  doctorName: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#1F2937",
-    textAlign: "center",
-  },
-  doctorMeta: {
-    marginTop: 4,
-    fontSize: 13,
-    color: "#6B7280",
-    textAlign: "center",
-  },
-  doctorRating: {
-    marginTop: 6,
-    fontSize: 13,
-    color: "#6B7280",
-  },
-  pharmacyList: {
-    gap: 14,
-  },
-  pharmacyCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 18,
-    padding: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.06,
-    shadowRadius: 14,
-    elevation: 3,
-  },
-  pharmacyBadge: {
-    width: 52,
-    height: 52,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 14,
-  },
-  pharmacyBadgeText: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#4B5563",
-  },
-  pharmacyInfo: {
-    flex: 1,
-  },
-  pharmacyName: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#1F2937",
-  },
-  pharmacyMeta: {
-    marginTop: 4,
-    fontSize: 13,
-    color: "#6B7280",
-  },
-  pharmacyArrow: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#E8F6F4",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  pharmacyArrowText: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#5DC1B9",
-  },
   bottomNav: {
     position: "absolute",
     left: 16,
     right: 16,
     bottom: 16,
-    height: 80,
+    height: 70,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-around",
@@ -894,30 +1103,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 4,
   },
-  navIconCircle: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: "#F3F4F6",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  navIconCircleActive: {
-    backgroundColor: "#E8F6F4",
-  },
-  navIconText: {
-    fontSize: 18,
-    color: "#6B7280",
-  },
-  navIconTextActive: {
-    color: "#10B981",
-  },
   navLabel: {
-    fontSize: 12,
-    color: "#9AA3AF",
+    fontSize: 11,
+    color: "#94A3B8",
+    fontWeight: "500",
   },
   navLabelActive: {
-    color: "#5DC1B9",
+    color: "#0F172A",
     fontWeight: "700",
   },
   modalOverlay: {
@@ -967,6 +1159,34 @@ const styles = StyleSheet.create({
   },
   modalList: {
     maxHeight: 340,
+  },
+  workerCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#EEF1F4",
+    gap: 12,
+  },
+  workerName: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#0F172A",
+  },
+  workerMeta: {
+    marginTop: 4,
+    fontSize: 12,
+    color: "#64748B",
+  },
+  workerButton: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 12,
+    backgroundColor: "#5DC1B9",
+  },
+  workerButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "700",
   },
   doctorSheet: {
     backgroundColor: "#FFFFFF",
@@ -1083,34 +1303,6 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontWeight: "700",
     fontSize: 15,
-  },
-  workerCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#EEF1F4",
-    gap: 12,
-  },
-  workerName: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#0F172A",
-  },
-  workerMeta: {
-    marginTop: 4,
-    fontSize: 12,
-    color: "#64748B",
-  },
-  workerButton: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 12,
-    backgroundColor: "#5DC1B9",
-  },
-  workerButtonText: {
-    color: "#FFFFFF",
-    fontWeight: "700",
   },
   searchOverlay: {
     flex: 1,

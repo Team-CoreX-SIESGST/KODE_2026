@@ -149,6 +149,184 @@ export async function uploadAbhaCard({ uri, name, type }) {
   return payload;
 }
 export const patientUpdate = (token, payload) => Promise.resolve({ success: true, ...payload });
+
+function getPatientByToken(token) {
+  return usersData.patientDetails.find((p) => p.abha_profile.healthIdNumber === token);
+}
+
+function toNumber(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function toBoolean(value) {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value === 1;
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    return normalized === "true" || normalized === "yes" || normalized === "1";
+  }
+  return false;
+}
+
+function toUrineProteinLabel(value) {
+  const numeric = toNumber(value);
+  if (numeric === null || numeric <= 0) return "NEGATIVE";
+  if (numeric === 1) return "ONE_PLUS";
+  if (numeric === 2) return "TWO_PLUS";
+  return "THREE_PLUS";
+}
+
+function buildAssessmentSummary(record) {
+  const factors = [];
+  if (record.sbp || record.dbp) factors.push(`BP ${record.sbp || "?"}/${record.dbp || "?"} mmHg`);
+  if (record.hb !== null && record.hb !== undefined && record.hb !== "") factors.push(`Hb ${record.hb} g/dL`);
+  if (record.fhs) factors.push(`FHS ${record.fhs} bpm`);
+  if (record.muac) factors.push(`MUAC ${record.muac} cm`);
+  return factors.join(" | ");
+}
+
+function buildVisitFromRecord(record) {
+  const visitDate = record.date
+    ? new Date(`${record.date}T09:00:00.000Z`).toISOString()
+    : new Date().toISOString();
+
+  const sbp = toNumber(record.sbp);
+  const dbp = toNumber(record.dbp);
+  const pulse = toNumber(record.maternalPulse);
+  const temperatureC = toNumber(record.temperature);
+  const weightKg = toNumber(record.weight);
+  const gestationalAgeWeeks = toNumber(record.gestationalWeekage);
+  const muacCm = toNumber(record.muac);
+  const fetalHeartRateBpm = toNumber(record.fhs);
+  const hemoglobinGdl = toNumber(record.hb);
+  const urineProtein = toUrineProteinLabel(record.urineProtein);
+
+  return {
+    visitType: "MATERNAL",
+    visitDate,
+    capturedByRole: "anm",
+    source: "OFFLINE_ENTRY",
+    syncStatus: "PENDING",
+    maternal: {
+      vitals: {
+        bpSystolic: sbp,
+        bpDiastolic: dbp,
+        pulse,
+        temperatureC,
+        respiratoryRate: null,
+        spo2: null,
+        weightKg,
+      },
+      symptoms: {
+        swelling: false,
+        fever: temperatureC !== null ? temperatureC > 38 : false,
+        bleeding: false,
+        headache: false,
+        blurredVision: false,
+        severeAbdominalPain: false,
+        convulsions: toBoolean(record.eclampsia),
+        reducedFetalMovement: false,
+        leakingFluid: false,
+        pallor: hemoglobinGdl !== null ? hemoglobinGdl < 11 : false,
+        breathlessness: false,
+      },
+      observations: {
+        gestationalAgeWeeks,
+        muacCm,
+        fetalMovement: "NORMAL",
+        fetalHeartRateBpm,
+        urineProtein,
+        bloodSugarMgDl: null,
+        hemoglobinGdl,
+        presentation: toBoolean(record.breech) ? "BREECH" : "CEPHALIC",
+      },
+    },
+    assessment: {
+      riskLevel: record.status || "PENDING",
+      score: toNumber(record.score) || 0,
+      engineVersion: "cdss-mnh-rules-v2",
+      language: "en",
+      identifiedConditions: Array.isArray(record.reasons) ? record.reasons : [],
+      reasons: Array.isArray(record.reasons) ? record.reasons : [],
+      clinicalExplanation: Array.isArray(record.hindiReasons) ? record.hindiReasons : [],
+      recommendedAction: record.impression || buildAssessmentSummary(record),
+      referral: {
+        urgency: record.referralLevel === "EMERGENCY" ? "IMMEDIATE" : "ROUTINE",
+        message: record.decision || "Follow ANC plan",
+        followUpWindowHours: record.referralLevel === "EMERGENCY" ? 0 : 168,
+      },
+      alerts: record.emergencyType ? [record.emergencyType] : [],
+      factors: [],
+    },
+    ancInputs: {
+      sbp,
+      dbp,
+      fhs: fetalHeartRateBpm,
+      hb: hemoglobinGdl,
+      muac: muacCm,
+      height: toNumber(record.height),
+      weight: weightKg,
+      weightGainPerMonth: toNumber(record.weightGainPerMonth),
+      prevCsection: toBoolean(record.prevCsection),
+      twins: toBoolean(record.twins),
+      breech: toBoolean(record.breech),
+      eclampsia: toBoolean(record.eclampsia),
+      gdm: toBoolean(record.gdm),
+      hiv: toBoolean(record.hiv),
+      urineProtein: toNumber(record.urineProtein),
+      urineGlucose: toBoolean(record.urineGlucose),
+      maternalPulse: pulse,
+      temperature: temperatureC,
+      gestationalWeekage: gestationalAgeWeeks,
+      gravida: toNumber(record.gravida),
+      age: toNumber(record.age),
+      missedVisits: toNumber(record.missedVisits),
+    },
+  };
+}
+
+function buildReportFromVisit(v) {
+  const anc = v?.ancInputs || {};
+  return {
+    reportId: v.visitDate,
+    testName: "Maternal ANC Assessment",
+    date: new Date(v.visitDate).toLocaleDateString(),
+    rawDate: v.visitDate,
+    status: v.assessment ? v.assessment.riskLevel : "NORMAL",
+    impression: v.assessment ? v.assessment.recommendedAction : "Routine checkup",
+    ancInputs: anc,
+    reasons: v.assessment?.reasons || [],
+    hindiReasons: v.assessment?.clinicalExplanation || [],
+    decision: v.assessment?.referral?.message || null,
+  };
+}
+
+export const patientCreateRecord = async (token, record) => {
+  const patient = getPatientByToken(token);
+  if (!patient) throw new Error("Patient not found");
+
+  const visit = buildVisitFromRecord(record);
+  patient._visits = Array.isArray(patient._visits) ? patient._visits : [];
+  patient._visits.unshift(visit);
+
+  return { success: true, record: buildReportFromVisit(visit), visit };
+};
+
+export const patientUpdateRecord = async (token, reportId, updates) => {
+  const patient = getPatientByToken(token);
+  if (!patient) throw new Error("Patient not found");
+
+  const index = (patient._visits || []).findIndex((visit) => visit.visitDate === reportId);
+  if (index === -1) throw new Error("Record not found");
+
+  const nextVisit = buildVisitFromRecord(updates);
+  nextVisit.visitDate = reportId;
+  patient._visits[index] = nextVisit;
+
+  return { success: true, reportId, record: buildReportFromVisit(nextVisit), visit: nextVisit };
+};
 export const patientMe = async (token) => {
   const patient = usersData.patientDetails.find(p => p.abha_profile.healthIdNumber === token);
   if (!patient) throw new Error("Patient not found");
@@ -162,13 +340,7 @@ export const patientMe = async (token) => {
       status: v.assessment ? v.assessment.riskLevel + " RISK" : "COMPLETED",
       summary: v.assessment ? v.assessment.recommendedAction : (v._note || "")
     })),
-    reports: (patient._visits || []).map(v => ({
-      reportId: v.visitDate,
-      testName: "Maternal Health Assessment",
-      date: new Date(v.visitDate).toLocaleDateString(),
-      status: v.assessment ? v.assessment.riskLevel : "NORMAL",
-      impression: v.assessment ? v.assessment.identifiedConditions.join(", ") : "Routine checkup"
-    }))
+    reports: (patient._visits || []).map(buildReportFromVisit)
   };
 };
 export const patientAssignAshaWorker = (token, ashaId) => {

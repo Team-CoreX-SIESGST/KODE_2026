@@ -8,12 +8,14 @@ import {
   Pressable,
   ActivityIndicator,
   Linking,
+  TextInput,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { Feather } from "@expo/vector-icons";
 import { patientMe } from "../services/api";
 import { AuthContext } from "../context/AuthContext";
+import { assess, buildPatientInputsFromProfile } from "../services/ruleEngine";
 
 const fallbackProfile = {
   name: "Meena Deshpande",
@@ -42,12 +44,68 @@ const fallbackProfile = {
   supportPhone: "9472811020"
 };
 
+const NUMERIC_FIELDS = [
+  { key: "sbp", label: "Systolic BP", placeholder: "e.g. 140", suffix: "mmHg" },
+  { key: "dbp", label: "Diastolic BP", placeholder: "e.g. 90", suffix: "mmHg" },
+  { key: "fhs", label: "Foetal Heart Rate", placeholder: "e.g. 148", suffix: "bpm" },
+  { key: "hb", label: "Haemoglobin", placeholder: "e.g. 9.5", suffix: "g/dL" },
+  { key: "muac", label: "MUAC", placeholder: "e.g. 22.5", suffix: "cm" },
+  { key: "height", label: "Height", placeholder: "e.g. 152", suffix: "cm" },
+  { key: "weight", label: "Weight", placeholder: "e.g. 54", suffix: "kg" },
+  { key: "weightGainPerMonth", label: "Weight Gain / Month", placeholder: "e.g. 0.8", suffix: "kg" },
+  { key: "maternalPulse", label: "Maternal Pulse", placeholder: "e.g. 96", suffix: "/min" },
+  { key: "temperature", label: "Temperature", placeholder: "e.g. 37.1", suffix: "C" },
+  { key: "gestationalWeekage", label: "Gestational Age", placeholder: "e.g. 30", suffix: "weeks" },
+  { key: "gravida", label: "Gravida", placeholder: "e.g. 1", suffix: null },
+  { key: "age", label: "Maternal Age", placeholder: "e.g. 27", suffix: "years" },
+  { key: "missedVisits", label: "Missed ANC Visits", placeholder: "e.g. 0", suffix: null },
+];
+
+const BOOLEAN_FIELDS = [
+  { key: "prevCsection", label: "Previous C-section" },
+  { key: "twins", label: "Twin pregnancy" },
+  { key: "breech", label: "Breech / transverse lie" },
+  { key: "eclampsia", label: "Eclampsia / convulsions" },
+  { key: "gdm", label: "Gestational diabetes" },
+  { key: "hiv", label: "HIV positive" },
+];
+
+const URINE_PROTEIN_OPTIONS = [0, 1, 2];
+
+function toInputValue(value) {
+  return value === null || value === undefined ? "" : String(value);
+}
+
+function toNumberOrNull(value) {
+  if (value === "" || value === null || value === undefined) {
+    return null;
+  }
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function toStatusTone(riskBand) {
+  if (riskBand === "EMERGENCY" || riskBand === "HIGH") return "high";
+  if (riskBand === "MEDIUM") return "medium";
+  return "low";
+}
+
+function statusLabel(result) {
+  if (!result) return "Not assessed";
+  if (result.riskBand === "EMERGENCY") return "Emergency referral";
+  if (result.riskBand === "HIGH") return "High risk";
+  if (result.riskBand === "MEDIUM") return "Medium risk watch";
+  return "Low risk";
+}
+
 export default function PatientProfilePage() {
   const navigation = useNavigation();
   const { token, user, signOut } = useContext(AuthContext);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [assessmentInputs, setAssessmentInputs] = useState(null);
+  const [assessmentDirty, setAssessmentDirty] = useState(false);
 
   const activeUser = profile || user;
 
@@ -132,6 +190,18 @@ export default function PatientProfilePage() {
     };
   }, [token]);
 
+  useEffect(() => {
+    const sourceProfile = profile || user || fallbackProfile;
+    if (!assessmentDirty) {
+      setAssessmentInputs(buildPatientInputsFromProfile(sourceProfile));
+    }
+  }, [profile, user, assessmentDirty]);
+
+  const assessmentResult = useMemo(
+    () => assess(assessmentInputs || {}),
+    [assessmentInputs]
+  );
+
   const avatarSource =
     mergedProfile.gender === "M"
       ? require("../../assets/male-icon.png")
@@ -151,7 +221,42 @@ export default function PatientProfilePage() {
     navigation.reset({ index: 0, routes: [{ name: "RoleSelection" }] });
   };
 
-  const isHighRisk = mergedProfile.cdss?.latestRiskLevel === "HIGH";
+  const isHighRisk =
+    assessmentResult.riskBand === "HIGH" ||
+    assessmentResult.riskBand === "EMERGENCY" ||
+    mergedProfile.cdss?.latestRiskLevel === "HIGH";
+  const statusTone = toStatusTone(assessmentResult.riskBand);
+
+  const handleNumericChange = (key, value) => {
+    const sanitized = value.replace(/[^0-9.]/g, "");
+    setAssessmentDirty(true);
+    setAssessmentInputs((prev) => ({
+      ...(prev || {}),
+      [key]: sanitized,
+    }));
+  };
+
+  const handleBooleanChange = (key, value) => {
+    setAssessmentDirty(true);
+    setAssessmentInputs((prev) => ({
+      ...(prev || {}),
+      [key]: value,
+    }));
+  };
+
+  const normalizedAssessmentInputs = useMemo(() => {
+    const source = assessmentInputs || {};
+    const normalized = {};
+    NUMERIC_FIELDS.forEach((field) => {
+      normalized[field.key] = toNumberOrNull(source[field.key]);
+    });
+    BOOLEAN_FIELDS.forEach((field) => {
+      normalized[field.key] = Boolean(source[field.key]);
+    });
+    normalized.urineProtein = toNumberOrNull(source.urineProtein);
+    normalized.urineGlucose = Boolean(source.urineGlucose);
+    return normalized;
+  }, [assessmentInputs]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -188,10 +293,19 @@ export default function PatientProfilePage() {
           </Pressable>
           <Text style={styles.email}>{mergedProfile.email}</Text>
           
-          {mergedProfile.cdss?.latestRiskLevel && (
-            <View style={[styles.riskBadge, isHighRisk ? styles.riskBadgeHigh : styles.riskBadgeLow]}>
+          {(assessmentResult?.riskBand || mergedProfile.cdss?.latestRiskLevel) && (
+            <View
+              style={[
+                styles.riskBadge,
+                statusTone === "high"
+                  ? styles.riskBadgeHigh
+                  : statusTone === "medium"
+                  ? styles.riskBadgeMedium
+                  : styles.riskBadgeLow,
+              ]}
+            >
               <Text style={styles.riskBadgeText}>
-                {mergedProfile.cdss.latestRiskLevel} RISK
+                {statusLabel(assessmentResult).toUpperCase()}
               </Text>
             </View>
           )}
@@ -219,13 +333,147 @@ export default function PatientProfilePage() {
                   <Text style={styles.pregValue}>G{mergedProfile.pregnancy.gravida} P{mergedProfile.pregnancy.parity}</Text>
                 </View>
               </View>
-              
-              {mergedProfile.cdss?.latestAlerts?.length > 0 && (
-                <View style={styles.alertMiniBox}>
-                  <Feather name="alert-circle" size={14} color="#DC2626" />
-                  <Text style={styles.alertMiniText}>{mergedProfile.cdss.latestAlerts[0]}</Text>
+
+              <View
+                style={[
+                  styles.assessmentCard,
+                  statusTone === "high"
+                    ? styles.assessmentCardHigh
+                    : statusTone === "medium"
+                    ? styles.assessmentCardMedium
+                    : styles.assessmentCardLow,
+                ]}
+              >
+                <View style={styles.assessmentHeader}>
+                  <View>
+                    <Text style={styles.assessmentLabel}>AI Pregnancy Status</Text>
+                    <Text style={styles.assessmentTitle}>{statusLabel(assessmentResult)}</Text>
+                  </View>
+                  <View style={styles.scorePill}>
+                    <Text style={styles.scorePillText}>Score {assessmentResult.score}</Text>
+                  </View>
                 </View>
-              )}
+                <View style={styles.assessmentMetaRow}>
+                  <View style={styles.assessmentMetaItem}>
+                    <Text style={styles.assessmentMetaLabel}>Decision</Text>
+                    <Text style={styles.assessmentMetaValue}>{assessmentResult.decision}</Text>
+                  </View>
+                  <View style={styles.assessmentMetaItem}>
+                    <Text style={styles.assessmentMetaLabel}>Referral</Text>
+                    <Text style={styles.assessmentMetaValue}>{assessmentResult.referralLevel}</Text>
+                  </View>
+                  <View style={styles.assessmentMetaItem}>
+                    <Text style={styles.assessmentMetaLabel}>Next Visit</Text>
+                    <Text style={styles.assessmentMetaValue}>
+                      {assessmentResult.nextVisitWeeks === 0
+                        ? "Now"
+                        : `${assessmentResult.nextVisitWeeks} week${assessmentResult.nextVisitWeeks > 1 ? "s" : ""}`}
+                    </Text>
+                  </View>
+                </View>
+                {assessmentResult.reasons?.length > 0 && (
+                  <View style={styles.reasonList}>
+                    {assessmentResult.reasons.slice(0, 3).map((reason, index) => (
+                      <View key={`${reason}-${index}`} style={styles.reasonRow}>
+                        <Feather
+                          name={statusTone === "high" ? "alert-triangle" : "check-circle"}
+                          size={14}
+                          color={statusTone === "high" ? "#DC2626" : statusTone === "medium" ? "#B45309" : "#15803D"}
+                        />
+                        <Text style={styles.reasonText}>{reason}</Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+                {assessmentResult.emergencyType ? (
+                  <View style={styles.alertMiniBox}>
+                    <Feather name="alert-circle" size={14} color="#DC2626" />
+                    <Text style={styles.alertMiniText}>
+                      Emergency type: {assessmentResult.emergencyType}
+                    </Text>
+                  </View>
+                ) : mergedProfile.cdss?.latestAlerts?.length > 0 ? (
+                  <View style={styles.alertMiniBox}>
+                    <Feather name="alert-circle" size={14} color="#DC2626" />
+                    <Text style={styles.alertMiniText}>{mergedProfile.cdss.latestAlerts[0]}</Text>
+                  </View>
+                ) : null}
+              </View>
+
+              <View style={styles.formSection}>
+                <Text style={styles.formSectionTitle}>ANC Inputs for AI Prediction</Text>
+                <Text style={styles.formHint}>
+                  Update the clinical fields below. Pregnancy status will recalculate instantly from the offline rule engine.
+                </Text>
+
+                <View style={styles.formGrid}>
+                  {NUMERIC_FIELDS.map((field) => (
+                    <View key={field.key} style={styles.inputCard}>
+                      <Text style={styles.inputCardLabel}>{field.label}</Text>
+                      <TextInput
+                        value={toInputValue(normalizedAssessmentInputs[field.key])}
+                        onChangeText={(text) => handleNumericChange(field.key, text)}
+                        keyboardType="decimal-pad"
+                        placeholder={field.placeholder}
+                        placeholderTextColor="#94A3B8"
+                        style={styles.inputCardField}
+                      />
+                      {field.suffix ? (
+                        <Text style={styles.inputCardSuffix}>{field.suffix}</Text>
+                      ) : null}
+                    </View>
+                  ))}
+                </View>
+
+                <Text style={styles.subSectionTitle}>Urine Protein</Text>
+                <View style={styles.optionRow}>
+                  {URINE_PROTEIN_OPTIONS.map((option) => (
+                    <Pressable
+                      key={option}
+                      style={[
+                        styles.optionPill,
+                        normalizedAssessmentInputs.urineProtein === option && styles.optionPillActive,
+                      ]}
+                      onPress={() => {
+                        setAssessmentDirty(true);
+                        setAssessmentInputs((prev) => ({ ...(prev || {}), urineProtein: option }));
+                      }}
+                    >
+                      <Text
+                        style={[
+                          styles.optionPillText,
+                          normalizedAssessmentInputs.urineProtein === option && styles.optionPillTextActive,
+                        ]}
+                      >
+                        {option === 0 ? "0" : `${option}+`}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+
+                <Text style={styles.subSectionTitle}>Clinical Flags</Text>
+                <View style={styles.toggleWrap}>
+                  {BOOLEAN_FIELDS.map((field) => {
+                    const active = Boolean(normalizedAssessmentInputs[field.key]);
+                    return (
+                      <Pressable
+                        key={field.key}
+                        style={[styles.toggleCard, active && styles.toggleCardActive]}
+                        onPress={() => handleBooleanChange(field.key, !active)}
+                      >
+                        <Text style={[styles.toggleCardText, active && styles.toggleCardTextActive]}>
+                          {field.label}
+                        </Text>
+                        <View style={[styles.toggleBadge, active && styles.toggleBadgeActive]}>
+                          <Text style={[styles.toggleBadgeText, active && styles.toggleBadgeTextActive]}>
+                            {active ? "Yes" : "No"}
+                          </Text>
+                        </View>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
             </View>
           </>
         )}
@@ -409,6 +657,9 @@ const styles = StyleSheet.create({
   riskBadgeLow: {
     backgroundColor: "#22C55E",
   },
+  riskBadgeMedium: {
+    backgroundColor: "#F59E0B",
+  },
   riskBadgeText: {
     color: "#FFFFFF",
     fontSize: 11,
@@ -463,6 +714,219 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#DC2626",
     fontWeight: "600",
+  },
+  assessmentCard: {
+    marginTop: 16,
+    borderRadius: 18,
+    padding: 14,
+    borderWidth: 1,
+  },
+  assessmentCardLow: {
+    backgroundColor: "#F0FDF4",
+    borderColor: "#BBF7D0",
+  },
+  assessmentCardMedium: {
+    backgroundColor: "#FFF7ED",
+    borderColor: "#FED7AA",
+  },
+  assessmentCardHigh: {
+    backgroundColor: "#FEF2F2",
+    borderColor: "#FECACA",
+  },
+  assessmentHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  assessmentLabel: {
+    fontSize: 11,
+    color: "#64748B",
+    textTransform: "uppercase",
+    fontWeight: "700",
+    letterSpacing: 0.8,
+  },
+  assessmentTitle: {
+    marginTop: 4,
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#0F172A",
+  },
+  scorePill: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: "#FFFFFF",
+  },
+  scorePillText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#0F172A",
+  },
+  assessmentMetaRow: {
+    marginTop: 14,
+    flexDirection: "row",
+    gap: 8,
+  },
+  assessmentMetaItem: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+  },
+  assessmentMetaLabel: {
+    fontSize: 10,
+    color: "#94A3B8",
+    textTransform: "uppercase",
+    fontWeight: "700",
+  },
+  assessmentMetaValue: {
+    marginTop: 6,
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#0F172A",
+  },
+  reasonList: {
+    marginTop: 14,
+    gap: 8,
+  },
+  reasonRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+  },
+  reasonText: {
+    flex: 1,
+    fontSize: 12,
+    color: "#334155",
+    lineHeight: 18,
+    fontWeight: "500",
+  },
+  formSection: {
+    marginTop: 18,
+  },
+  formSectionTitle: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#0F172A",
+  },
+  formHint: {
+    marginTop: 6,
+    fontSize: 12,
+    color: "#64748B",
+    lineHeight: 18,
+  },
+  formGrid: {
+    marginTop: 14,
+    gap: 12,
+  },
+  inputCard: {
+    backgroundColor: "#F8FAFC",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    padding: 12,
+  },
+  inputCardLabel: {
+    fontSize: 12,
+    color: "#475569",
+    fontWeight: "700",
+  },
+  inputCardField: {
+    marginTop: 8,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 15,
+    color: "#0F172A",
+  },
+  inputCardSuffix: {
+    marginTop: 6,
+    fontSize: 11,
+    color: "#94A3B8",
+    fontWeight: "600",
+  },
+  subSectionTitle: {
+    marginTop: 16,
+    fontSize: 13,
+    color: "#475569",
+    fontWeight: "800",
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+  },
+  optionRow: {
+    marginTop: 10,
+    flexDirection: "row",
+    gap: 8,
+  },
+  optionPill: {
+    minWidth: 54,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 999,
+    backgroundColor: "#F1F5F9",
+    alignItems: "center",
+  },
+  optionPillActive: {
+    backgroundColor: "#0F172A",
+  },
+  optionPillText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#475569",
+  },
+  optionPillTextActive: {
+    color: "#FFFFFF",
+  },
+  toggleWrap: {
+    marginTop: 10,
+    gap: 10,
+  },
+  toggleCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  toggleCardActive: {
+    backgroundColor: "#ECFDF5",
+    borderColor: "#86EFAC",
+  },
+  toggleCardText: {
+    flex: 1,
+    fontSize: 14,
+    color: "#0F172A",
+    fontWeight: "600",
+  },
+  toggleCardTextActive: {
+    color: "#166534",
+  },
+  toggleBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: "#E2E8F0",
+  },
+  toggleBadgeActive: {
+    backgroundColor: "#16A34A",
+  },
+  toggleBadgeText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#334155",
+  },
+  toggleBadgeTextActive: {
+    color: "#FFFFFF",
   },
   metricsRow: {
     marginTop: 16,
