@@ -1,0 +1,850 @@
+[
+  {
+    "_comment": "Patient 1 — HIGH-RISK: Gestational Diabetes Mellitus, Severe Anaemia, Hypertension with pre-eclampsia signs. ANM has recorded a refused referral that has escalated.",
+    "abha_profile": {
+      "healthIdNumber": "91-7834-2201-0071",
+      "healthId": "meena.devi.sharma@abdm",
+      "name": "Meena Devi Sharma",
+      "firstName": "Meena",
+      "middleName": "Devi",
+      "lastName": "Sharma",
+      "gender": "F",
+      "dateOfBirth": "1998-03-12",
+      "yearOfBirth": "1998",
+      "monthOfBirth": "03",
+      "dayOfBirth": "12",
+      "mobile": "9934100071",
+      "email": null,
+      "profilePhoto": null,
+      "kycPhoto": null,
+      "authMethods": ["MOBILE_OTP"],
+      "kycVerified": false,
+      "verificationStatus": "PENDING",
+      "verificationSource": "MOBILE",
+      "abha_id_card": "91-7834-2201-0071"
+    },
+    "address": {
+      "addressLine": "Tola No. 4, Near Gram Panchayat Bhawan",
+      "village": "Pipra Kothi",
+      "subDistrict": "Motihari",
+      "district": "East Champaran",
+      "state": "Bihar",
+      "pincode": "845401",
+      "country": "India"
+    },
+    "demographicData": {
+      "ageYears": 27,
+      "maritalStatus": "Married",
+      "education": "Class 8 (Secondary)",
+      "occupation": "Homemaker",
+      "phoneNumber": "9934100071",
+      "emergencyContactName": "Ramesh Kumar Sharma (Husband)",
+      "emergencyContactPhone": "9934100072",
+      "village": "Pipra Kothi",
+      "block": "Motihari",
+      "district": "East Champaran"
+    },
+    "pregnancyDetails": {
+      "currentlyPregnant": true,
+      "gravida": 3,
+      "parity": 1,
+      "abortions": 1,
+      "livingChildren": 1,
+      "lastMenstrualPeriod": "2025-09-08",
+      "expectedDeliveryDate": "2026-06-15",
+      "gestationalAgeWeeks": 30,
+      "highRiskHistory": [
+        "Gestational Diabetes Mellitus (GDM) — diagnosed at 26 weeks in current pregnancy",
+        "Previous intrauterine growth restriction (IUGR)",
+        "Spontaneous Abortion at 10 weeks (2022)"
+      ],
+      "previousCSection": false,
+      "multiplePregnancy": false,
+      "lastUpdatedAt": "2026-04-10T07:30:00.000Z"
+    },
+    "health_records": {
+      "bloodGroup": "B+",
+      "height_cm": 152,
+      "weight_kg": 54,
+      "bmi": 23.4,
+      "allergies": ["Penicillin"],
+      "chronicConditions": [
+        "Gestational Diabetes Mellitus (current pregnancy)",
+        "Iron Deficiency Anaemia (chronic, pre-existing)"
+      ],
+      "disabilities": [],
+      "organDonor": false,
+      "vaccinationRecord": {
+        "TT1": "DONE",
+        "TT2": "DONE",
+        "TDap": "NOT_GIVEN"
+      },
+      "pregnancyStatus": {
+        "isPregnant": true,
+        "weeksPregnant": 30,
+        "edd": "2026-06-15",
+        "lmp": "2025-09-08",
+        "gravida": 3,
+        "para": 1,
+        "abortions": 1,
+        "highRisk": true
+      }
+    },
+    "locationCoordinates": {
+      "latitude": 26.6512,
+      "longitude": 84.9179
+    },
+    "anmWorker": {
+      "name": "Savita Kumari",
+      "contact": "9472811020",
+      "serviceArea": "Motihari Sub-centre Block A"
+    },
+    "cdssSummary": {
+      "latestRiskLevel": "HIGH",
+      "latestAssessmentAt": "2026-04-10T07:45:00.000Z",
+      "priorityScore": 3,
+      "latestAlerts": [
+        "BP is increasing over time - risk may increase."
+      ]
+    },
+    "_visits": [
+      {
+        "_note": "Visit 1 — ANC at 24 weeks. Anaemia detected. Hypertension borderline.",
+        "visitType": "MATERNAL",
+        "visitDate": "2026-02-14T09:00:00.000Z",
+        "capturedByRole": "anm",
+        "source": "ONLINE",
+        "syncStatus": "RECEIVED",
+        "maternal": {
+          "vitals": {
+            "bpSystolic": 138,
+            "bpDiastolic": 88,
+            "pulse": 96,
+            "temperatureC": 37.1,
+            "respiratoryRate": 18,
+            "spo2": 98,
+            "weightKg": 51
+          },
+          "symptoms": {
+            "swelling": true,
+            "fever": false,
+            "bleeding": false,
+            "headache": true,
+            "blurredVision": false,
+            "severeAbdominalPain": false,
+            "convulsions": false,
+            "reducedFetalMovement": false,
+            "leakingFluid": false,
+            "pallor": true,
+            "breathlessness": false
+          },
+          "observations": {
+            "gestationalAgeWeeks": 24,
+            "muacCm": 22.5,
+            "fetalMovement": "NORMAL",
+            "fetalHeartRateBpm": 148,
+            "urineProtein": "ONE_PLUS",
+            "bloodSugarMgDl": 168,
+            "hemoglobinGdl": 8.4
+          }
+        },
+        "assessment": {
+          "riskLevel": "HIGH",
+          "score": 55,
+          "engineVersion": "cdss-mnh-rules-v1",
+          "language": "en",
+          "identifiedConditions": [
+            "Hypertension in Pregnancy",
+            "Possible Pre-Eclampsia",
+            "Severe Anaemia",
+            "Maternal Undernutrition"
+          ],
+          "reasons": [
+            "BP is 138 / 88 mmHg.",
+            "High BP is present with headache, visual symptoms, swelling, or proteinuria.",
+            "Hemoglobin is 8.4 g/dL.",
+            "MUAC is 22.5 cm."
+          ],
+          "clinicalExplanation": [
+            "Hypertension during pregnancy can progress to pre-eclampsia and needs prompt assessment.",
+            "The combination suggests possible pre-eclampsia, which can progress rapidly.",
+            "Severe anemia increases the risk of heart failure, bleeding complications, and poor fetal growth.",
+            "Low MUAC suggests undernutrition and needs nutrition counseling and follow-up."
+          ],
+          "recommendedAction": "Refer urgently to facility. Prepare for possible immediate referral.",
+          "referral": {
+            "urgency": "WITHIN_24_HOURS",
+            "message": "Refer to PHC or CHC within 24 hours. Do not delay.",
+            "followUpWindowHours": 24
+          },
+          "alerts": ["BP is increasing over time - risk may increase."],
+          "factors": [
+            {
+              "code": "SEVERE_HYPERTENSION",
+              "label": "Hypertension in Pregnancy",
+              "severity": "HIGH",
+              "weight": 25,
+              "source": "CURRENT_VISIT",
+              "reason": "BP is 138 / 88 mmHg.",
+              "explanation": "Hypertension during pregnancy can progress to pre-eclampsia and needs prompt assessment.",
+              "recommendation": "Repeat BP, check danger signs, and plan referral if symptoms or proteinuria are present."
+            },
+            {
+              "code": "POSSIBLE_PREECLAMPSIA",
+              "label": "Possible Pre-Eclampsia",
+              "severity": "HIGH",
+              "weight": 30,
+              "source": "COMBINATION",
+              "reason": "High BP is present with headache, swelling, and proteinuria (1+).",
+              "explanation": "The combination suggests possible pre-eclampsia, which can progress rapidly.",
+              "recommendation": "Refer within 24 hours or immediately if severe symptoms develop."
+            },
+            {
+              "code": "SEVERE_ANEMIA",
+              "label": "Severe Anaemia",
+              "severity": "HIGH",
+              "weight": 35,
+              "source": "CURRENT_VISIT",
+              "reason": "Hemoglobin is 8.4 g/dL.",
+              "explanation": "Severe anemia increases the risk of heart failure, bleeding complications, and poor fetal growth.",
+              "recommendation": "Refer urgently for anemia management."
+            },
+            {
+              "code": "MATERNAL_UNDERNUTRITION",
+              "label": "Maternal Undernutrition",
+              "severity": "MEDIUM",
+              "weight": 15,
+              "source": "CURRENT_VISIT",
+              "reason": "MUAC is 22.5 cm.",
+              "explanation": "Low MUAC suggests undernutrition and needs nutrition counseling and follow-up.",
+              "recommendation": "Give nutrition counseling and monitor MUAC."
+            }
+          ],
+          "trendSummary": {
+            "bpSystolic": [138],
+            "bpDiastolic": [88]
+          },
+          "evaluatedAt": "2026-02-14T09:05:00.000Z"
+        },
+        "referralOutcome": {
+          "status": "REFUSED",
+          "refusalReason": "COST",
+          "refusalNote": "Family says they cannot afford transport and hospital stay. Husband away for work in Delhi.",
+          "negotiationAttempts": 1,
+          "resolvedAt": null
+        },
+        "escalated": false
+      },
+      {
+        "_note": "Visit 2 — ANC at 28 weeks. GDM confirmed. BP worsening. 2nd negotiation attempt → ESCALATED.",
+        "visitType": "MATERNAL",
+        "visitDate": "2026-03-14T08:30:00.000Z",
+        "capturedByRole": "anm",
+        "source": "ONLINE",
+        "syncStatus": "RECEIVED",
+        "maternal": {
+          "vitals": {
+            "bpSystolic": 148,
+            "bpDiastolic": 95,
+            "pulse": 102,
+            "temperatureC": 37.3,
+            "respiratoryRate": 20,
+            "spo2": 97,
+            "weightKg": 52.5
+          },
+          "symptoms": {
+            "swelling": true,
+            "fever": false,
+            "bleeding": false,
+            "headache": true,
+            "blurredVision": true,
+            "severeAbdominalPain": false,
+            "convulsions": false,
+            "reducedFetalMovement": false,
+            "leakingFluid": false,
+            "pallor": true,
+            "breathlessness": true
+          },
+          "observations": {
+            "gestationalAgeWeeks": 28,
+            "muacCm": 22.0,
+            "fetalMovement": "REDUCED",
+            "fetalHeartRateBpm": 154,
+            "urineProtein": "TWO_PLUS",
+            "bloodSugarMgDl": 214,
+            "hemoglobinGdl": 7.6
+          }
+        },
+        "assessment": {
+          "riskLevel": "HIGH",
+          "score": 102,
+          "engineVersion": "cdss-mnh-rules-v1",
+          "language": "en",
+          "identifiedConditions": [
+            "Hypertension in Pregnancy",
+            "Possible Pre-Eclampsia",
+            "Severe Anaemia",
+            "Reduced Fetal Movement",
+            "Maternal Undernutrition"
+          ],
+          "reasons": [
+            "BP is 148 / 95 mmHg.",
+            "High BP is present with headache, blurred vision, swelling, and proteinuria (2+).",
+            "Hemoglobin is 7.6 g/dL.",
+            "Reduced fetal movement was reported.",
+            "MUAC is 22.0 cm."
+          ],
+          "clinicalExplanation": [
+            "Hypertension during pregnancy can progress to pre-eclampsia and needs prompt assessment.",
+            "The combination suggests possible pre-eclampsia, which can progress rapidly.",
+            "Severe anemia increases the risk of heart failure, bleeding complications, and poor fetal growth.",
+            "Reduced movement may be an early warning of fetal distress.",
+            "Low MUAC suggests undernutrition and needs nutrition counseling and follow-up."
+          ],
+          "recommendedAction": "Refer urgently to facility. Prepare for possible immediate referral.",
+          "referral": {
+            "urgency": "WITHIN_24_HOURS",
+            "message": "Refer to PHC or CHC within 24 hours. Do not delay.",
+            "followUpWindowHours": 24
+          },
+          "alerts": ["BP is increasing over time - risk may increase."],
+          "factors": [
+            {
+              "code": "SEVERE_HYPERTENSION",
+              "label": "Hypertension in Pregnancy",
+              "severity": "HIGH",
+              "weight": 25,
+              "source": "CURRENT_VISIT",
+              "reason": "BP is 148 / 95 mmHg.",
+              "explanation": "Hypertension during pregnancy can progress to pre-eclampsia.",
+              "recommendation": "Repeat BP, check danger signs, refer if symptoms worsen."
+            },
+            {
+              "code": "POSSIBLE_PREECLAMPSIA",
+              "label": "Possible Pre-Eclampsia",
+              "severity": "HIGH",
+              "weight": 30,
+              "source": "COMBINATION",
+              "reason": "High BP with headache, blurred vision, swelling, and proteinuria 2+.",
+              "explanation": "The combination suggests possible pre-eclampsia, which can progress rapidly.",
+              "recommendation": "Refer within 24 hours or immediately if severe symptoms develop."
+            },
+            {
+              "code": "SEVERE_ANEMIA",
+              "label": "Severe Anaemia",
+              "severity": "HIGH",
+              "weight": 35,
+              "source": "CURRENT_VISIT",
+              "reason": "Hemoglobin is 7.6 g/dL.",
+              "explanation": "Severe anemia increases the risk of complications and poor fetal growth.",
+              "recommendation": "Refer urgently for anemia management."
+            },
+            {
+              "code": "REDUCED_FETAL_MOVEMENT",
+              "label": "Reduced Fetal Movement",
+              "severity": "HIGH",
+              "weight": 30,
+              "source": "CURRENT_VISIT",
+              "reason": "Reduced fetal movement was reported.",
+              "explanation": "Reduced movement may be an early warning of fetal distress.",
+              "recommendation": "Refer for fetal assessment within 24 hours."
+            },
+            {
+              "code": "RISING_BP",
+              "label": "Rising Blood Pressure Trend",
+              "severity": "MEDIUM",
+              "weight": 12,
+              "source": "HISTORY",
+              "reason": "The last 2 visits show a rising BP pattern (138→148 systolic).",
+              "explanation": "A rising BP trend can precede hypertensive disorders in pregnancy.",
+              "recommendation": "Repeat BP, monitor closely, and escalate if danger signs appear."
+            },
+            {
+              "code": "MATERNAL_UNDERNUTRITION",
+              "label": "Maternal Undernutrition",
+              "severity": "MEDIUM",
+              "weight": 15,
+              "source": "CURRENT_VISIT",
+              "reason": "MUAC is 22.0 cm.",
+              "explanation": "Low MUAC suggests undernutrition.",
+              "recommendation": "Give nutrition counseling and monitor MUAC."
+            }
+          ],
+          "trendSummary": {
+            "bpSystolic": [138, 148],
+            "bpDiastolic": [88, 95]
+          },
+          "evaluatedAt": "2026-03-14T08:35:00.000Z"
+        },
+        "referralOutcome": {
+          "status": "REFUSED",
+          "refusalReason": "FAMILY_PRESSURE",
+          "refusalNote": "Mother-in-law refused to allow hospital visit. Believes hospital will force caesarean section.",
+          "negotiationAttempts": 2,
+          "resolvedAt": null
+        },
+        "escalated": true
+      },
+      {
+        "_note": "Visit 3 — ANC urgent follow-up at 30 weeks. Condition worsening. ANM escalated to Medical Officer.",
+        "visitType": "MATERNAL",
+        "visitDate": "2026-04-10T07:30:00.000Z",
+        "capturedByRole": "anm",
+        "source": "ONLINE",
+        "syncStatus": "RECEIVED",
+        "maternal": {
+          "vitals": {
+            "bpSystolic": 156,
+            "bpDiastolic": 100,
+            "pulse": 108,
+            "temperatureC": 37.5,
+            "respiratoryRate": 22,
+            "spo2": 96,
+            "weightKg": 54
+          },
+          "symptoms": {
+            "swelling": true,
+            "fever": false,
+            "bleeding": false,
+            "headache": true,
+            "blurredVision": true,
+            "severeAbdominalPain": false,
+            "convulsions": false,
+            "reducedFetalMovement": true,
+            "leakingFluid": false,
+            "pallor": true,
+            "breathlessness": true
+          },
+          "observations": {
+            "gestationalAgeWeeks": 30,
+            "muacCm": 21.5,
+            "fetalMovement": "REDUCED",
+            "fetalHeartRateBpm": 158,
+            "urineProtein": "THREE_PLUS",
+            "bloodSugarMgDl": 236,
+            "hemoglobinGdl": 6.8
+          }
+        },
+        "assessment": {
+          "riskLevel": "HIGH",
+          "score": 147,
+          "engineVersion": "cdss-mnh-rules-v1",
+          "language": "en",
+          "identifiedConditions": [
+            "Hypertension in Pregnancy",
+            "Possible Pre-Eclampsia",
+            "Severe Anaemia",
+            "Reduced Fetal Movement",
+            "Maternal Undernutrition"
+          ],
+          "reasons": [
+            "BP is 156 / 100 mmHg.",
+            "High BP with headache, blurred vision, swelling, and proteinuria 3+.",
+            "Hemoglobin is 6.8 g/dL.",
+            "Reduced fetal movement reported.",
+            "MUAC is 21.5 cm."
+          ],
+          "clinicalExplanation": [
+            "Hypertension at 156/100 with 3+ proteinuria is a severe pre-eclampsia pattern requiring urgent intervention.",
+            "Severe anemia significantly increases peripartum hemorrhage risk.",
+            "Reduced fetal movement at 30 weeks indicates possible fetal compromise.",
+            "Low MUAC suggests ongoing maternal undernutrition."
+          ],
+          "recommendedAction": "Refer urgently to facility. Prepare for possible immediate referral.",
+          "referral": {
+            "urgency": "WITHIN_24_HOURS",
+            "message": "Refer to PHC or CHC within 24 hours. Do not delay.",
+            "followUpWindowHours": 24
+          },
+          "alerts": [
+            "BP is increasing over time - risk may increase.",
+            "Fever is repeated across visits - assess for persistent infection."
+          ],
+          "factors": [
+            {
+              "code": "SEVERE_HYPERTENSION",
+              "label": "Hypertension in Pregnancy",
+              "severity": "HIGH",
+              "weight": 25,
+              "source": "CURRENT_VISIT",
+              "reason": "BP is 156 / 100 mmHg.",
+              "explanation": "Approaching severe hypertension threshold. Needs urgent assessment.",
+              "recommendation": "Refer immediately if BP exceeds 160/110 or symptoms worsen."
+            },
+            {
+              "code": "POSSIBLE_PREECLAMPSIA",
+              "label": "Possible Pre-Eclampsia",
+              "severity": "HIGH",
+              "weight": 30,
+              "source": "COMBINATION",
+              "reason": "High BP with headache, blurred vision, swelling, proteinuria 3+.",
+              "explanation": "Severe pre-eclampsia pattern. Immediate obstetric intervention required.",
+              "recommendation": "Arrange immediate referral."
+            },
+            {
+              "code": "SEVERE_ANEMIA",
+              "label": "Severe Anaemia",
+              "severity": "HIGH",
+              "weight": 35,
+              "source": "CURRENT_VISIT",
+              "reason": "Hemoglobin is 6.8 g/dL.",
+              "explanation": "Severe anemia at this level is life-threatening peri-partum.",
+              "recommendation": "Refer urgently for IV iron infusion or blood transfusion evaluation."
+            },
+            {
+              "code": "REDUCED_FETAL_MOVEMENT",
+              "label": "Reduced Fetal Movement",
+              "severity": "HIGH",
+              "weight": 30,
+              "source": "CURRENT_VISIT",
+              "reason": "Reduced fetal movement at 30 weeks.",
+              "explanation": "Reduced movement may indicate fetal compromise.",
+              "recommendation": "Refer for fetal assessment within 24 hours."
+            },
+            {
+              "code": "RISING_BP",
+              "label": "Rising Blood Pressure Trend",
+              "severity": "MEDIUM",
+              "weight": 12,
+              "source": "HISTORY",
+              "reason": "Progressive rise across 3 visits: 138→148→156 mmHg systolic.",
+              "explanation": "A rising BP trend can precede severe hypertensive disorders.",
+              "recommendation": "Escalate immediately."
+            },
+            {
+              "code": "MATERNAL_UNDERNUTRITION",
+              "label": "Maternal Undernutrition",
+              "severity": "HIGH",
+              "weight": 30,
+              "source": "CURRENT_VISIT",
+              "reason": "MUAC is 21.5 cm.",
+              "explanation": "MUAC < 21 cm is severe undernutrition with high maternal-fetal risk.",
+              "recommendation": "Therapeutic nutrition support and urgent referral."
+            }
+          ],
+          "trendSummary": {
+            "bpSystolic": [138, 148, 156],
+            "bpDiastolic": [88, 95, 100]
+          },
+          "evaluatedAt": "2026-04-10T07:45:00.000Z"
+        },
+        "referralOutcome": {
+          "status": "PENDING",
+          "negotiationAttempts": 0,
+          "resolvedAt": null
+        },
+        "escalated": true
+      }
+    ]
+  },
+
+  {
+    "_comment": "Patient 2 — LOW-RISK: Healthy primigravida, normal vitals, normal fetal development. All assessments LOW risk. Referral accepted on first ask.",
+    "abha_profile": {
+      "healthIdNumber": "91-6621-4405-0032",
+      "healthId": "ananya.singh.rajput@abdm",
+      "name": "Ananya Singh",
+      "firstName": "Ananya",
+      "middleName": "",
+      "lastName": "Singh",
+      "gender": "F",
+      "dateOfBirth": "2001-11-20",
+      "yearOfBirth": "2001",
+      "monthOfBirth": "11",
+      "dayOfBirth": "20",
+      "mobile": "8765400032",
+      "email": "ananya.singh2001@gmail.com",
+      "profilePhoto": null,
+      "kycPhoto": null,
+      "authMethods": ["AADHAAR_OTP", "MOBILE_OTP"],
+      "kycVerified": true,
+      "verificationStatus": "VERIFIED",
+      "verificationSource": "AADHAAR",
+      "abha_id_card": "91-6621-4405-0032"
+    },
+    "address": {
+      "addressLine": "Flat 2B, Shanti Niwas Colony",
+      "village": "Jalalpur",
+      "subDistrict": "Ballia",
+      "district": "Ballia",
+      "state": "Uttar Pradesh",
+      "pincode": "277001",
+      "country": "India"
+    },
+    "demographicData": {
+      "ageYears": 24,
+      "maritalStatus": "Married",
+      "education": "B.A. (Graduate)",
+      "occupation": "Homemaker (previously school teacher)",
+      "phoneNumber": "8765400032",
+      "emergencyContactName": "Vijay Singh Rajput (Husband)",
+      "emergencyContactPhone": "8765400033",
+      "village": "Jalalpur",
+      "block": "Ballia",
+      "district": "Ballia"
+    },
+    "pregnancyDetails": {
+      "currentlyPregnant": true,
+      "gravida": 1,
+      "parity": 0,
+      "abortions": 0,
+      "livingChildren": 0,
+      "lastMenstrualPeriod": "2025-11-03",
+      "expectedDeliveryDate": "2026-08-10",
+      "gestationalAgeWeeks": 23,
+      "highRiskHistory": [],
+      "previousCSection": false,
+      "multiplePregnancy": false,
+      "lastUpdatedAt": "2026-04-08T10:00:00.000Z"
+    },
+    "health_records": {
+      "bloodGroup": "O+",
+      "height_cm": 162,
+      "weight_kg": 62,
+      "bmi": 23.6,
+      "allergies": [],
+      "chronicConditions": [],
+      "disabilities": [],
+      "organDonor": false,
+      "vaccinationRecord": {
+        "TT1": "DONE",
+        "TT2": "DONE",
+        "TDap": "NOT_GIVEN"
+      },
+      "pregnancyStatus": {
+        "isPregnant": true,
+        "weeksPregnant": 23,
+        "edd": "2026-08-10",
+        "lmp": "2025-11-03",
+        "gravida": 1,
+        "para": 0,
+        "abortions": 0,
+        "highRisk": false
+      }
+    },
+    "locationCoordinates": {
+      "latitude": 25.7501,
+      "longitude": 84.1523
+    },
+    "anmWorker": {
+      "name": "Savita Kumari",
+      "contact": "9472811020",
+      "serviceArea": "Ballia Urban Sub-centre"
+    },
+    "cdssSummary": {
+      "latestRiskLevel": "LOW",
+      "latestAssessmentAt": "2026-04-08T10:10:00.000Z",
+      "priorityScore": 1,
+      "latestAlerts": []
+    },
+    "_visits": [
+      {
+        "_note": "Visit 1 — First ANC at 16 weeks. All normal. Low risk.",
+        "visitType": "MATERNAL",
+        "visitDate": "2026-02-17T10:00:00.000Z",
+        "capturedByRole": "anm",
+        "source": "ONLINE",
+        "syncStatus": "RECEIVED",
+        "maternal": {
+          "vitals": {
+            "bpSystolic": 110,
+            "bpDiastolic": 70,
+            "pulse": 82,
+            "temperatureC": 36.8,
+            "respiratoryRate": 16,
+            "spo2": 99,
+            "weightKg": 59
+          },
+          "symptoms": {
+            "swelling": false,
+            "fever": false,
+            "bleeding": false,
+            "headache": false,
+            "blurredVision": false,
+            "severeAbdominalPain": false,
+            "convulsions": false,
+            "reducedFetalMovement": false,
+            "leakingFluid": false,
+            "pallor": false,
+            "breathlessness": false
+          },
+          "observations": {
+            "gestationalAgeWeeks": 16,
+            "muacCm": 25.5,
+            "fetalMovement": "NORMAL",
+            "fetalHeartRateBpm": 144,
+            "urineProtein": "NEGATIVE",
+            "bloodSugarMgDl": 88,
+            "hemoglobinGdl": 11.8
+          }
+        },
+        "assessment": {
+          "riskLevel": "LOW",
+          "score": 0,
+          "engineVersion": "cdss-mnh-rules-v1",
+          "language": "en",
+          "identifiedConditions": [],
+          "reasons": [],
+          "clinicalExplanation": [],
+          "recommendedAction": "Continue routine antenatal care. No immediate action required.",
+          "referral": {
+            "urgency": "ROUTINE",
+            "message": "Routine follow-up at next scheduled ANC visit.",
+            "followUpWindowHours": 720
+          },
+          "alerts": [],
+          "factors": [],
+          "trendSummary": {
+            "bpSystolic": [110],
+            "bpDiastolic": [70]
+          },
+          "evaluatedAt": "2026-02-17T10:05:00.000Z"
+        },
+        "referralOutcome": {
+          "status": "ACCEPTED",
+          "negotiationAttempts": 1,
+          "resolvedAt": "2026-02-17T10:20:00.000Z"
+        },
+        "escalated": false
+      },
+      {
+        "_note": "Visit 2 — Second ANC at 20 weeks. Anomaly scan done. All findings normal. Low risk.",
+        "visitType": "MATERNAL",
+        "visitDate": "2026-03-18T10:30:00.000Z",
+        "capturedByRole": "anm",
+        "source": "ONLINE",
+        "syncStatus": "RECEIVED",
+        "maternal": {
+          "vitals": {
+            "bpSystolic": 112,
+            "bpDiastolic": 72,
+            "pulse": 80,
+            "temperatureC": 36.9,
+            "respiratoryRate": 15,
+            "spo2": 99,
+            "weightKg": 60.5
+          },
+          "symptoms": {
+            "swelling": false,
+            "fever": false,
+            "bleeding": false,
+            "headache": false,
+            "blurredVision": false,
+            "severeAbdominalPain": false,
+            "convulsions": false,
+            "reducedFetalMovement": false,
+            "leakingFluid": false,
+            "pallor": false,
+            "breathlessness": false
+          },
+          "observations": {
+            "gestationalAgeWeeks": 20,
+            "muacCm": 25.8,
+            "fetalMovement": "NORMAL",
+            "fetalHeartRateBpm": 146,
+            "urineProtein": "NEGATIVE",
+            "bloodSugarMgDl": 92,
+            "hemoglobinGdl": 11.5
+          }
+        },
+        "assessment": {
+          "riskLevel": "LOW",
+          "score": 0,
+          "engineVersion": "cdss-mnh-rules-v1",
+          "language": "en",
+          "identifiedConditions": [],
+          "reasons": [],
+          "clinicalExplanation": [],
+          "recommendedAction": "Continue routine antenatal care. No immediate action required.",
+          "referral": {
+            "urgency": "ROUTINE",
+            "message": "Routine follow-up at next scheduled ANC visit.",
+            "followUpWindowHours": 720
+          },
+          "alerts": [],
+          "factors": [],
+          "trendSummary": {
+            "bpSystolic": [110, 112],
+            "bpDiastolic": [70, 72]
+          },
+          "evaluatedAt": "2026-03-18T10:35:00.000Z"
+        },
+        "referralOutcome": {
+          "status": "ACCEPTED",
+          "negotiationAttempts": 1,
+          "resolvedAt": "2026-03-18T10:45:00.000Z"
+        },
+        "escalated": false
+      },
+      {
+        "_note": "Visit 3 — Third ANC at 23 weeks. All vitals and fetal parameters normal. Glucose screening normal. Low risk.",
+        "visitType": "MATERNAL",
+        "visitDate": "2026-04-08T10:00:00.000Z",
+        "capturedByRole": "anm",
+        "source": "ONLINE",
+        "syncStatus": "RECEIVED",
+        "maternal": {
+          "vitals": {
+            "bpSystolic": 108,
+            "bpDiastolic": 68,
+            "pulse": 78,
+            "temperatureC": 36.7,
+            "respiratoryRate": 16,
+            "spo2": 99,
+            "weightKg": 62
+          },
+          "symptoms": {
+            "swelling": false,
+            "fever": false,
+            "bleeding": false,
+            "headache": false,
+            "blurredVision": false,
+            "severeAbdominalPain": false,
+            "convulsions": false,
+            "reducedFetalMovement": false,
+            "leakingFluid": false,
+            "pallor": false,
+            "breathlessness": false
+          },
+          "observations": {
+            "gestationalAgeWeeks": 23,
+            "muacCm": 26.2,
+            "fetalMovement": "NORMAL",
+            "fetalHeartRateBpm": 142,
+            "urineProtein": "NEGATIVE",
+            "bloodSugarMgDl": 86,
+            "hemoglobinGdl": 12.1
+          }
+        },
+        "assessment": {
+          "riskLevel": "LOW",
+          "score": 0,
+          "engineVersion": "cdss-mnh-rules-v1",
+          "language": "en",
+          "identifiedConditions": [],
+          "reasons": [],
+          "clinicalExplanation": [],
+          "recommendedAction": "Continue routine antenatal care. No immediate action required.",
+          "referral": {
+            "urgency": "ROUTINE",
+            "message": "Routine follow-up at next scheduled ANC visit.",
+            "followUpWindowHours": 720
+          },
+          "alerts": [],
+          "factors": [],
+          "trendSummary": {
+            "bpSystolic": [110, 112, 108],
+            "bpDiastolic": [70, 72, 68]
+          },
+          "evaluatedAt": "2026-04-08T10:10:00.000Z"
+        },
+        "referralOutcome": {
+          "status": "ACCEPTED",
+          "negotiationAttempts": 1,
+          "resolvedAt": "2026-04-08T10:20:00.000Z"
+        },
+        "escalated": false
+      }
+    ]
+  }
+]
