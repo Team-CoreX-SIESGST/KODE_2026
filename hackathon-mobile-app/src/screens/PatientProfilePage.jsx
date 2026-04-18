@@ -16,88 +16,99 @@ import { patientMe } from "../services/api";
 import { AuthContext } from "../context/AuthContext";
 
 const fallbackProfile = {
-  name: "Gurpreet Kaur",
-  abhaId: "12-3456-7890-0001",
-  abhaIdCard: "https://abdm.gov.in/",
-  email: "gurpreet.kaur@abdm",
+  name: "Meena Deshpande",
+  abhaId: "91-7834-2201-0071",
+  abhaIdCard: "91-7834-2201-0071",
+  email: "meena.deshpande@abdm",
   gender: "F",
   bloodGroup: "B+",
-  bmi: "21.6",
+  bmi: "23.4",
   allergies: "Penicillin",
-  condition: "Anaemia",
-  recentConsultation: {
-    doctor: "Dr. Rajinder Singh",
-    specialty: "General Physician",
-    status: "Completed",
-    diagnosis: "Iron Deficiency Anaemia",
-    followUp: "10 Dec 2025",
+  condition: "Gestational Diabetes, Anaemia",
+  pregnancyDetails: {
+    currentlyPregnant: true,
+    gestationalAgeWeeks: 30,
+    expectedDeliveryDate: "2026-06-15",
+    gravida: 3,
+    parity: 1,
   },
-  policyNumber: "AB-PB-2025-001234",
-  supportName: "Sunita Devi",
-  supportRole: "ASHA Worker",
-  address: "Barnala Khurd, Nabha, Patiala, Punjab",
+  cdssSummary: {
+    latestRiskLevel: "HIGH",
+    latestAlerts: ["BP is increasing over time - risk may increase."]
+  },
+  address: "Flat 102, Shanti Kunj, Kothrud, Pune, Maharashtra",
+  supportName: "Aruna Patil",
+  supportRole: "ANM Worker",
+  supportPhone: "9472811020"
 };
 
 export default function PatientProfilePage() {
   const navigation = useNavigation();
   const { token, user, signOut } = useContext(AuthContext);
-  const [profile, setProfile] = useState(fallbackProfile);
+  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
+  const activeUser = profile || user;
+
   const mergedProfile = useMemo(() => {
-    // Prefer ABHA profile coming from the logged-in user,
-    // then any profile loaded via /patient/me, then fallback.
-    const abhaProfile = user?.abha_profile || profile.abha_profile || {};
+    const abhaProfile = activeUser?.abha_profile || {};
+    const healthRecords = activeUser?.health_records || {};
+    const cdssSummary = activeUser?.cdssSummary || {};
+    const pregnancy = activeUser?.pregnancyDetails || {};
+    const address = activeUser?.address || {};
+    const anmWorker = activeUser?.anmWorker || {};
 
     return {
-      ...fallbackProfile,
-      ...profile,
       name:
-        abhaProfile.firstName ||
         abhaProfile.name ||
-        user?.name ||
+        activeUser?.name ||
         fallbackProfile.name,
-      // ABHA number shown under the name
       abhaId:
         abhaProfile.healthIdNumber ||
         abhaProfile.abha_id ||
-        user?.abhaId ||
+        activeUser?.abhaId ||
         fallbackProfile.abhaId,
-      // ABHA card link (image / PDF URL)
       abhaIdCard:
         abhaProfile.abha_id_card ||
-        user?.abhaIdCard ||
+        activeUser?.abhaIdCard ||
         fallbackProfile.abhaIdCard,
-      // Show ABHA handle (healthId) in the "email" row as requested
       email:
         abhaProfile.healthId ||
         abhaProfile.email ||
-        user?.email ||
+        activeUser?.email ||
         fallbackProfile.email,
-      // Drive gender primarily from ABHA profile
-      gender: abhaProfile.gender || user?.gender || fallbackProfile.gender,
-      // Health vitals: prefer values coming from the logged-in user
-      // (server response on login), then anything we loaded into profile,
-      // and finally the static fallback.
+      gender: abhaProfile.gender || activeUser?.gender || "F",
       bloodGroup:
-        user?.bloodGroup || profile.bloodGroup || fallbackProfile.bloodGroup,
-      bmi: user?.bmi || profile.bmi || fallbackProfile.bmi,
+        healthRecords.bloodGroup ||
+        activeUser?.bloodGroup ||
+        fallbackProfile.bloodGroup,
+      bmi: healthRecords.bmi || activeUser?.bmi || fallbackProfile.bmi,
       allergies:
-        user?.allergies || profile.allergies || fallbackProfile.allergies,
-      condition:
-        user?.condition || profile.condition || fallbackProfile.condition,
-      policyNumber:
-        user?.policyNumber ||
-        profile.policyNumber ||
-        fallbackProfile.policyNumber,
-      supportName:
-        user?.supportName || profile.supportName || fallbackProfile.supportName,
-      supportRole:
-        user?.supportRole || profile.supportRole || fallbackProfile.supportRole,
-      address: user?.address || profile.address || fallbackProfile.address,
+        (healthRecords.allergies && healthRecords.allergies.join(", ")) ||
+        activeUser?.allergies ||
+        fallbackProfile.allergies,
+      chronicConditions:
+        (healthRecords.chronicConditions && healthRecords.chronicConditions.join(", ")) ||
+        activeUser?.condition ||
+        fallbackProfile.condition,
+      pregnancy: pregnancy,
+      cdss: cdssSummary,
+      addressStr: address.addressLine
+        ? `${address.addressLine}, ${address.village}, ${address.district}, ${address.state}`
+        : activeUser?.address || fallbackProfile.address,
+      supportName: ashaName(activeUser),
+      supportRole: "ANM Worker",
+      supportPhone: anmWorker.contact || activeUser?.supportPhone,
     };
-  }, [profile, user]);
+  }, [activeUser]);
+
+  function ashaName(u) {
+    if (u?.anmWorker?.name) return u.anmWorker.name;
+    if (u?.ashaWorker?.name) return u.ashaWorker.name;
+    if (u?.supportName) return u.supportName;
+    return "Not assigned";
+  }
 
   useEffect(() => {
     let isMounted = true;
@@ -107,30 +118,11 @@ export default function PatientProfilePage() {
       try {
         const data = await patientMe(token);
         if (!isMounted || !data) return;
-        setProfile((prev) => ({
-          ...prev,
-          name: data.name || prev.name,
-          abha_profile: data.abha_profile || prev.abha_profile,
-          bloodGroup: data.bloodGroup || prev.bloodGroup,
-          bmi: data.bmi || prev.bmi,
-          allergies: data.allergies || prev.allergies,
-          condition: data.condition || prev.condition,
-          policyNumber: data.policyNumber || prev.policyNumber,
-          supportName: data.supportName || prev.supportName,
-          supportRole: data.supportRole || prev.supportRole,
-          address: data.address || prev.address,
-          ashaWorker: data.ashaWorker || prev.ashaWorker,
-          ashaWorkerAssignedAt:
-            data.ashaWorkerAssignedAt || prev.ashaWorkerAssignedAt,
-          recentConsultation:
-            data.recentConsultation || prev.recentConsultation || fallbackProfile.recentConsultation,
-        }));
+        setProfile(data);
       } catch (err) {
-        // keep fallback data
+        // keep auth user data
       } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+        if (isMounted) setLoading(false);
       }
     };
 
@@ -146,7 +138,7 @@ export default function PatientProfilePage() {
       : require("../../assets/female-icon.png");
 
   const handleOpenAbha = async () => {
-    if (!mergedProfile.abhaIdCard) return;
+    if (!mergedProfile.abhaIdCard || mergedProfile.abhaIdCard.startsWith("http") === false) return;
     const canOpen = await Linking.canOpenURL(mergedProfile.abhaIdCard);
     if (canOpen) {
       Linking.openURL(mergedProfile.abhaIdCard);
@@ -159,13 +151,15 @@ export default function PatientProfilePage() {
     navigation.reset({ index: 0, routes: [{ name: "RoleSelection" }] });
   };
 
+  const isHighRisk = mergedProfile.cdss?.latestRiskLevel === "HIGH";
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.headerRow}>
-          <View style={styles.headerIcon}>
+          <Pressable style={styles.headerIcon} onPress={() => navigation.goBack()}>
             <Feather name="chevron-left" size={20} color="#4B5563" />
-          </View>
+          </Pressable>
           <Text style={styles.headerTitle}>Patient Profile</Text>
           <View style={styles.headerMenuWrap}>
             <Pressable
@@ -184,7 +178,7 @@ export default function PatientProfilePage() {
           </View>
         </View>
 
-        <View style={styles.heroCard}>
+        <View style={[styles.heroCard, isHighRisk && styles.heroCardHighRisk]}>
           <View style={styles.avatarWrap}>
             <Image source={avatarSource} style={styles.avatar} />
           </View>
@@ -193,7 +187,48 @@ export default function PatientProfilePage() {
             <Text style={styles.abhaId}>ABHA ID: {mergedProfile.abhaId}</Text>
           </Pressable>
           <Text style={styles.email}>{mergedProfile.email}</Text>
+          
+          {mergedProfile.cdss?.latestRiskLevel && (
+            <View style={[styles.riskBadge, isHighRisk ? styles.riskBadgeHigh : styles.riskBadgeLow]}>
+              <Text style={styles.riskBadgeText}>
+                {mergedProfile.cdss.latestRiskLevel} RISK
+              </Text>
+            </View>
+          )}
         </View>
+
+        {mergedProfile.pregnancy?.currentlyPregnant && (
+          <>
+            <Text style={styles.sectionTitle}>Pregnancy Tracking</Text>
+            <View style={styles.pregnancyCard}>
+              <View style={styles.pregRow}>
+                <View style={styles.pregItem}>
+                  <Text style={styles.pregLabel}>Weeks</Text>
+                  <Text style={styles.pregValue}>{mergedProfile.pregnancy.gestationalAgeWeeks}</Text>
+                </View>
+                <View style={styles.pregDivider} />
+                <View style={styles.pregItem}>
+                  <Text style={styles.pregLabel}>EDD</Text>
+                  <Text style={styles.pregValue}>
+                    {mergedProfile.pregnancy.expectedDeliveryDate ? new Date(mergedProfile.pregnancy.expectedDeliveryDate).toLocaleDateString() : "TBD"}
+                  </Text>
+                </View>
+                <View style={styles.pregDivider} />
+                <View style={styles.pregItem}>
+                  <Text style={styles.pregLabel}>Gravida</Text>
+                  <Text style={styles.pregValue}>G{mergedProfile.pregnancy.gravida} P{mergedProfile.pregnancy.parity}</Text>
+                </View>
+              </View>
+              
+              {mergedProfile.cdss?.latestAlerts?.length > 0 && (
+                <View style={styles.alertMiniBox}>
+                  <Feather name="alert-circle" size={14} color="#DC2626" />
+                  <Text style={styles.alertMiniText}>{mergedProfile.cdss.latestAlerts[0]}</Text>
+                </View>
+              )}
+            </View>
+          </>
+        )}
 
         <View style={styles.metricsRow}>
           <View style={styles.metricCard}>
@@ -208,7 +243,7 @@ export default function PatientProfilePage() {
 
         <View style={styles.alertCard}>
           <Text style={styles.alertLabel}>Allergies</Text>
-          <Text style={styles.alertValue}>{mergedProfile.allergies}</Text>
+          <Text style={styles.alertValue}>{mergedProfile.allergies || "None reported"}</Text>
         </View>
 
         <Text style={styles.sectionTitle}>Medical Conditions</Text>
@@ -216,74 +251,36 @@ export default function PatientProfilePage() {
           <View style={styles.conditionIcon}>
             <Feather name="plus-square" size={18} color="#F97316" />
           </View>
-          <View>
-            <Text style={styles.conditionLabel}>Chronic Condition</Text>
-            <Text style={styles.conditionValue}>{mergedProfile.condition}</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.conditionLabel}>Chronic Conditions</Text>
+            <Text style={styles.conditionValue}>{mergedProfile.chronicConditions || "No chronic conditions"}</Text>
           </View>
-        </View>
-
-        <Text style={styles.sectionTitle}>Recent Consultation</Text>
-        <View style={styles.consultCard}>
-          <View style={styles.consultHeader}>
-            <View>
-              <Text style={styles.consultDoctor}>
-                {mergedProfile.recentConsultation.doctor}
-              </Text>
-              <Text style={styles.consultSpecialty}>
-                {mergedProfile.recentConsultation.specialty}
-              </Text>
-            </View>
-            <View style={styles.consultBadge}>
-              <Text style={styles.consultBadgeText}>
-                {mergedProfile.recentConsultation.status}
-              </Text>
-            </View>
-          </View>
-          <View style={styles.consultDivider} />
-          <Text style={styles.consultLabel}>Diagnosis</Text>
-          <Text style={styles.consultValue}>
-            {mergedProfile.recentConsultation.diagnosis}
-          </Text>
-          <View style={styles.consultDivider} />
-          <View style={styles.consultFooter}>
-            <View>
-              <Text style={styles.consultLabel}>Follow-up</Text>
-              <Text style={styles.consultValue}>
-                {mergedProfile.recentConsultation.followUp}
-              </Text>
-            </View>
-            <Text style={styles.consultLink}>Reports</Text>
-          </View>
-        </View>
-
-        <View style={styles.policyCard}>
-          <Feather name="shield" size={18} color="#D1FAE5" />
-          <Text style={styles.policyLabel}>Policy Number</Text>
-          <Text style={styles.policyValue}>{mergedProfile.policyNumber}</Text>
         </View>
 
         <Text style={styles.sectionTitle}>Local Support</Text>
         <View style={styles.supportCard}>
           <View style={styles.supportIcon}>
-            <Feather name="map-pin" size={18} color="#5DC1B9" />
+            <Feather name="user" size={18} color="#5DC1B9" />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.supportName}>
-              {mergedProfile.supportName || "Not connected"}
+              {mergedProfile.supportName}
             </Text>
             <Text style={styles.supportRole}>
-              {mergedProfile.supportRole || "Connect to ASHA worker"}
+              {mergedProfile.supportRole}
             </Text>
           </View>
-          <View style={styles.supportCall}>
-            <Feather name="phone" size={18} color="#22C55E" />
-          </View>
+          {mergedProfile.supportPhone && (
+            <Pressable style={styles.supportCall} onPress={() => Linking.openURL(`tel:${mergedProfile.supportPhone}`)}>
+              <Feather name="phone" size={18} color="#22C55E" />
+            </Pressable>
+          )}
         </View>
 
         <Text style={styles.sectionTitle}>Address Details</Text>
         <View style={styles.addressCard}>
           <Feather name="map-pin" size={18} color="#94A3B8" />
-          <Text style={styles.addressText}>{mergedProfile.address}</Text>
+          <Text style={styles.addressText}>{mergedProfile.addressStr}</Text>
         </View>
       </ScrollView>
 
@@ -359,11 +356,17 @@ const styles = StyleSheet.create({
     paddingVertical: 22,
     paddingHorizontal: 16,
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#E6F2F0",
+  },
+  heroCardHighRisk: {
+    backgroundColor: "#FEF2F2",
+    borderColor: "#FEE2E2",
   },
   avatarWrap: {
-    width: 110,
-    height: 110,
-    borderRadius: 55,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     backgroundColor: "#FFFFFF",
     alignItems: "center",
     justifyContent: "center",
@@ -374,8 +377,8 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   avatar: {
-    width: 72,
-    height: 72,
+    width: 64,
+    height: 64,
   },
   name: {
     marginTop: 14,
@@ -394,6 +397,73 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#6B7280",
   },
+  riskBadge: {
+    marginTop: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 12,
+  },
+  riskBadgeHigh: {
+    backgroundColor: "#DC2626",
+  },
+  riskBadgeLow: {
+    backgroundColor: "#22C55E",
+  },
+  riskBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 11,
+    fontWeight: "800",
+    textTransform: "uppercase",
+  },
+  pregnancyCard: {
+    marginTop: 12,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#EEF1F4",
+  },
+  pregRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  pregItem: {
+    flex: 1,
+    alignItems: "center",
+  },
+  pregLabel: {
+    fontSize: 11,
+    color: "#94A3B8",
+    fontWeight: "600",
+    textTransform: "uppercase",
+  },
+  pregValue: {
+    marginTop: 4,
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#0F172A",
+  },
+  pregDivider: {
+    width: 1,
+    height: 30,
+    backgroundColor: "#EEF2F6",
+  },
+  alertMiniBox: {
+    marginTop: 14,
+    backgroundColor: "#FEF2F2",
+    padding: 10,
+    borderRadius: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  alertMiniText: {
+    flex: 1,
+    fontSize: 12,
+    color: "#DC2626",
+    fontWeight: "600",
+  },
   metricsRow: {
     marginTop: 16,
     flexDirection: "row",
@@ -408,7 +478,7 @@ const styles = StyleSheet.create({
     borderColor: "#E6EEF0",
   },
   metricLabel: {
-    fontSize: 12,
+    fontSize: 11,
     color: "#94A3B8",
     textTransform: "uppercase",
     fontWeight: "600",
@@ -424,6 +494,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#FEF2F2",
     borderRadius: 18,
     padding: 16,
+    borderWidth: 1,
+    borderColor: "#FEE2E2",
   },
   alertLabel: {
     fontSize: 12,
@@ -440,7 +512,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     marginTop: 20,
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "700",
     color: "#94A3B8",
     textTransform: "uppercase",
@@ -466,7 +538,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   conditionLabel: {
-    fontSize: 12,
+    fontSize: 11,
     color: "#94A3B8",
   },
   conditionValue: {
@@ -474,87 +546,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
     color: "#0F172A",
-  },
-  consultCard: {
-    marginTop: 12,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 20,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "#EEF1F4",
-  },
-  consultHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  consultDoctor: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#0F172A",
-  },
-  consultSpecialty: {
-    marginTop: 4,
-    fontSize: 13,
-    color: "#5DC1B9",
-  },
-  consultBadge: {
-    backgroundColor: "#E8F6F4",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 999,
-  },
-  consultBadgeText: {
-    fontSize: 11,
-    color: "#5DC1B9",
-    fontWeight: "700",
-    textTransform: "uppercase",
-  },
-  consultDivider: {
-    marginVertical: 12,
-    height: 1,
-    backgroundColor: "#EEF2F6",
-  },
-  consultLabel: {
-    fontSize: 11,
-    color: "#94A3B8",
-    textTransform: "uppercase",
-    letterSpacing: 0.6,
-  },
-  consultValue: {
-    marginTop: 6,
-    fontSize: 15,
-    color: "#0F172A",
-    fontWeight: "600",
-  },
-  consultFooter: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  consultLink: {
-    fontSize: 13,
-    color: "#5DC1B9",
-    fontWeight: "600",
-  },
-  policyCard: {
-    marginTop: 18,
-    borderRadius: 20,
-    padding: 16,
-    backgroundColor: "#5DC1B9",
-  },
-  policyLabel: {
-    marginTop: 8,
-    fontSize: 12,
-    color: "#D1FAE5",
-    textTransform: "uppercase",
-    letterSpacing: 1,
-  },
-  policyValue: {
-    marginTop: 6,
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#FFFFFF",
   },
   supportCard: {
     marginTop: 12,
@@ -607,7 +598,7 @@ const styles = StyleSheet.create({
   addressText: {
     flex: 1,
     fontSize: 14,
-    color: "#0F172A",
+    color: "#1F2937",
     lineHeight: 20,
   },
   loadingOverlay: {

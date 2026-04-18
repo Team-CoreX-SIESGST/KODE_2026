@@ -204,7 +204,10 @@ export default function PatientDashboardMock() {
   };
 
   const supportName =
-    activeUser?.supportName || activeUser?.ashaWorker?.name || null;
+    activeUser?.anmWorker?.name ||
+    activeUser?.supportName ||
+    activeUser?.ashaWorker?.name ||
+    null;
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
