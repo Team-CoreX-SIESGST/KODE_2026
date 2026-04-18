@@ -11,6 +11,7 @@ import {
 import { protectAnm } from '../middleware/roleAuth.js';
 import { validateBody } from '../middleware/validate.js';
 import { validateCdssPatientUpsert, validateCdssSync, validateCdssVisit } from '../validators/requestValidators.js';
+import referralRoutes from './referralRoutes.js';
 
 const router = express.Router();
 
@@ -24,5 +25,8 @@ router.post('/sync/visits', validateBody(validateCdssSync), syncCdssVisits);
 router.post('/patients/:patientId/visits', validateBody(validateCdssVisit), createCdssVisit);
 router.get('/patients/:patientId/visits', listCdssVisits);
 router.get('/patients/:patientId/timeline', getCdssTimeline);
+
+// Referral outcome tracking routes (new addition — does not modify existing routes above)
+router.use('/', referralRoutes);
 
 export default router;

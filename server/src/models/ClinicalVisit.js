@@ -123,6 +123,26 @@ const referralSchema = new mongoose.Schema(
     { _id: false }
 );
 
+const REFUSAL_REASONS = ['HUSBAND_AWAY', 'COST', 'FEAR', 'TRANSPORT', 'FAMILY_PRESSURE', 'OTHER'];
+
+const referralOutcomeSchema = new mongoose.Schema(
+    {
+        status: {
+            type: String,
+            enum: ['ACCEPTED', 'REFUSED', 'PENDING'],
+            default: 'PENDING'
+        },
+        refusalReason: {
+            type: String,
+            enum: REFUSAL_REASONS
+        },
+        refusalNote: { type: String, trim: true },
+        negotiationAttempts: { type: Number, default: 0, min: 0 },
+        resolvedAt: { type: Date }
+    },
+    { _id: false }
+);
+
 const assessmentSchema = new mongoose.Schema(
     {
         riskLevel: {
@@ -193,6 +213,8 @@ const clinicalVisitSchema = new mongoose.Schema(
             observations: { type: neonatalObservationSchema }
         },
         assessment: { type: assessmentSchema, required: true },
+        referralOutcome: { type: referralOutcomeSchema, default: () => ({}) },
+        escalated: { type: Boolean, default: false, index: true, sparse: true },
         rawInput: { type: mongoose.Schema.Types.Mixed }
     },
     { timestamps: true }

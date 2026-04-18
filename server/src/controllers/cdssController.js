@@ -5,6 +5,7 @@ import { evaluateClinicalRisk } from '../utils/cdss/decisionEngine.js';
 import { getAssessmentChecklist as buildChecklist } from '../utils/cdss/checklists.js';
 import { normalizeLanguage } from '../utils/cdss/localization.js';
 import { AppError, asyncHandler } from '../utils/errors.js';
+import { enrichWithEscalationTags } from './referralController.js';
 
 const HISTORY_LIMIT = 5;
 const RISK_PRIORITY = {
@@ -401,9 +402,12 @@ export const getCdssDashboard = asyncHandler(async (req, res) => {
                 (RISK_PRIORITY[a.latestAssessment?.riskLevel] || RISK_PRIORITY[a.cdssSummary?.latestRiskLevel] || 0)
         );
 
+    const patientIds = patients.map((p) => p._id);
+    const enrichedResults = await enrichWithEscalationTags(results, patientIds);
+
     res.json({
-        count: results.length,
-        results
+        count: enrichedResults.length,
+        results: enrichedResults
     });
 });
 
