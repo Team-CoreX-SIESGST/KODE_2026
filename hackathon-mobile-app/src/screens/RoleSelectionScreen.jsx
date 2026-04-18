@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   StyleSheet,
@@ -39,13 +39,8 @@ const roles = [
 
 export default function RoleSelectionScreen({ navigation }) {
   const { t, i18n } = useTranslation();
-  const [selectedRole, setSelectedRole] = useState("patient");
   const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
   const languageAnim = useRef(new Animated.Value(0)).current;
-  const currentSelection = useMemo(
-    () => roles.find((role) => role.key === selectedRole),
-    [selectedRole],
-  );
 
   const languageOptions = ["en", "hi", "pa", "mr", "ur", "ta"];
   const currentLanguageLabel = t(`common.lang_${i18n.language}`, i18n.language);
@@ -163,16 +158,13 @@ export default function RoleSelectionScreen({ navigation }) {
 
           <View style={styles.cardsBlock}>
             {roles.map((role) => {
-              const isActive = role.key === selectedRole;
               return (
                 <Pressable
                   key={role.key}
-                  onPress={() => setSelectedRole(role.key)}
-                  style={[
-                    styles.card,
-                    isActive && styles.cardActive,
-                    { backgroundColor: role.background },
-                  ]}
+                  onPress={() =>
+                    navigation.navigate("AuthChoice", { role: role.key })
+                  }
+                  style={[styles.card, { backgroundColor: role.background }]}
                 >
                   <View style={styles.avatarWrap}>
                     <Image
@@ -192,19 +184,6 @@ export default function RoleSelectionScreen({ navigation }) {
             })}
           </View>
         </ScrollView>
-
-        <View style={styles.footer}>
-          <Pressable
-            style={styles.primaryButton}
-            onPress={() =>
-              navigation.navigate("AuthChoice", { role: currentSelection?.key })
-            }
-          >
-            <Text style={styles.primaryButtonText}>
-              Continue
-            </Text>
-          </Pressable>
-        </View>
         {languageMenuOpen && (
           <Pressable style={styles.languageBackdrop} onPress={closeLanguageMenu} />
         )}
@@ -225,7 +204,7 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 24,
     paddingTop: 72,
-    paddingBottom: 140,
+    paddingBottom: 40,
   },
   appName: {
     fontSize: 26,
@@ -255,8 +234,8 @@ const styles = StyleSheet.create({
   },
   card: {
     borderRadius: 24,
-    paddingVertical: 22,
-    paddingHorizontal: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 10,
     alignItems: "center",
     borderWidth: 1,
     borderColor: "#EEF1F4",
@@ -265,11 +244,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 18,
     elevation: 3,
-  },
-  cardActive: {
-    borderColor: "#5DC1B9",
-    shadowColor: "#5DC1B9",
-    shadowOpacity: 0.18,
   },
   avatarWrap: {
     width: 110,
@@ -303,12 +277,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 20,
     ...fontStyles.body,
-  },
-  footer: {
-    position: "absolute",
-    left: 24,
-    right: 24,
-    bottom: 24,
   },
   languageFloating: {
     position: "absolute",
@@ -385,22 +353,5 @@ const styles = StyleSheet.create({
   },
   languageMenuTextActive: {
     color: "#0F766E",
-  },
-  primaryButton: {
-    backgroundColor: "#5DC1B9",
-    paddingVertical: 16,
-    borderRadius: 18,
-    alignItems: "center",
-    shadowColor: "#5DC1B9",
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.25,
-    shadowRadius: 18,
-    elevation: 4,
-  },
-  primaryButtonText: {
-    color: "#FFFFFF",
-    fontSize: 18,
-    fontWeight: "700",
-    ...fontStyles.bold,
   },
 });
