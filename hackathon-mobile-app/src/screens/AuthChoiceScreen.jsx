@@ -728,26 +728,18 @@ export default function AuthChoiceScreen({ navigation, route }) {
   return (
     <SafeAreaView style={styles.patientSafeArea}>
       <StatusBar
-        barStyle="light-content"
+        barStyle="dark-content"
         translucent
         backgroundColor="transparent"
       />
       <View style={styles.patientScreen}>
         <LinearGradient
-          colors={["#4DBDB5", "#2FA89F", "#1A8C84", "#0D6B64"]}
-          locations={[0, 0.35, 0.72, 1]}
-          start={{ x: 0.15, y: 0 }}
-          end={{ x: 0.85, y: 1 }}
+          colors={["#FFFFFF", "#F7FAFC", "#EEF5F9"]}
+          locations={[0, 0.55, 1]}
+          start={{ x: 0.1, y: 0 }}
+          end={{ x: 0.9, y: 1 }}
           style={styles.patientBackdrop}
-        >
-          <View style={styles.topAccentBar} />
-          <View style={[styles.patientBlob, styles.patientBlobTL]} />
-          <View style={[styles.patientBlob, styles.patientBlobBR]} />
-          <View style={[styles.patientBlob, styles.patientBlobMid]} />
-          <View style={[styles.patientArc, styles.patientArcOne]} />
-          <View style={[styles.patientArc, styles.patientArcTwo]} />
-          <View style={[styles.patientArc, styles.patientArcThree]} />
-        </LinearGradient>
+        />
 
         {renderLanguagePicker()}
 
@@ -756,14 +748,26 @@ export default function AuthChoiceScreen({ navigation, route }) {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <MotionReveal delay={40} style={styles.patientHeader}>
-            <Text style={styles.patientHeaderTitle}>
-              {t("auth.patient_login_title")}
+          {/* <MotionReveal delay={40} style={styles.doctorHeroCard}>
+            
+            <View style={styles.doctorHeroCopy}>
+              
+              <Text style={styles.doctorHeroTitle}>
+                Patient access for safe maternal follow-up
+              </Text>
+              <Text style={styles.doctorHeroSubtitle}>
+                Continue with ABHA or mobile OTP.
+              </Text>
+            </View>
+          </MotionReveal> */}
+          <View style={styles.doctorHeroCopy}>
+            <Text style={styles.doctorHeroTitle}>
+              Patient Login
             </Text>
-            <Text style={styles.patientHeaderSubtitle}>
-              {t("auth.choose_verify")}
+            <Text style={styles.doctorHeroSubtitle}>
+              Continue with ABHA or mobile OTP.
             </Text>
-          </MotionReveal>
+          </View>
 
           <MotionReveal delay={100} style={styles.patientPanelMotion}>
             <View style={styles.patientPanel}>
@@ -804,18 +808,11 @@ export default function AuthChoiceScreen({ navigation, route }) {
 
               <MotionReveal
                 key={`${patientMethod}-${abhaMode}`}
-                delay={60}
+                delay={40}
                 style={styles.motionSection}
               >
                 {patientMethod === "abha" ? (
                   <View style={styles.formPanel}>
-                    <Text style={styles.formPanelTitle}>
-                      {t("auth.abha_verification")}
-                    </Text>
-                    <Text style={styles.formPanelSubtitle}>
-                      {patientExperienceCopy.abhaHint}
-                    </Text>
-
                     <View style={styles.subTabRow}>
                       <Pressable
                         style={[
@@ -846,7 +843,7 @@ export default function AuthChoiceScreen({ navigation, route }) {
                             abhaMode === "upload" && styles.subTabTextActive,
                           ]}
                         >
-                          {t("auth.upload_abha_card")}
+                        {t("auth.upload_abha_card")}
                         </Text>
                       </Pressable>
                     </View>
@@ -897,9 +894,7 @@ export default function AuthChoiceScreen({ navigation, route }) {
                             </Text>
                           </View>
                         ) : (
-                          <Text style={styles.helperText}>
-                            {t("auth.upload_hint")}
-                          </Text>
+                          <Text style={styles.helperText}>{t("auth.upload_hint")}</Text>
                         )}
                       </View>
                     )}
@@ -916,16 +911,16 @@ export default function AuthChoiceScreen({ navigation, route }) {
                         {abhaLoading ? t("auth.processing") : t("auth.continue")}
                       </Text>
                     </Pressable>
+                    {/* <LottieView
+                  source={require("../../assets/Patient.json")}
+                  autoPlay
+                  loop
+                  style={styles.doctorHeroAnimation}
+                /> */}
                   </View>
+                  
                 ) : (
                   <View style={styles.formPanel}>
-                    <Text style={styles.formPanelTitle}>
-                      {t("auth.mobile_otp_title")}
-                    </Text>
-                    <Text style={styles.formPanelSubtitle}>
-                      {patientExperienceCopy.mobileHint}
-                    </Text>
-
                     <View style={styles.field}>
                       <Text style={styles.label}>
                         {t("auth.mobile_number_label")}
@@ -994,6 +989,12 @@ export default function AuthChoiceScreen({ navigation, route }) {
                     )}
                   </View>
                 )}
+                <LottieView
+                  source={require("../../assets/Patient.json")}
+                  autoPlay
+                  loop
+                  style={styles.doctorHeroAnimation}
+                />
               </MotionReveal>
 
               {status ? (
@@ -1002,16 +1003,6 @@ export default function AuthChoiceScreen({ navigation, route }) {
                 </View>
               ) : null}
             </View>
-          </MotionReveal>
-
-          <MotionReveal delay={150} style={styles.patientLottieWrap}>
-            <LottieView
-              source={require("../../assets/Patient.json")}
-              autoPlay
-              loop={false}
-              style={styles.patientLottie}
-              resizeMode="contain"
-            />
           </MotionReveal>
         </ScrollView>
 
@@ -1033,7 +1024,7 @@ const styles = StyleSheet.create({
   },
   patientSafeArea: {
     flex: 1,
-    backgroundColor: "#4DBDB5",
+    backgroundColor: "#FFFFFF",
   },
   screen: {
     flex: 1,
@@ -1042,70 +1033,10 @@ const styles = StyleSheet.create({
   patientScreen: {
     flex: 1,
     position: "relative",
-    backgroundColor: "#4DBDB5",
+    backgroundColor: "#FFFFFF",
   },
   patientBackdrop: {
     ...StyleSheet.absoluteFillObject,
-  },
-  topAccentBar: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 3,
-    backgroundColor: "rgba(255,255,255,0.24)",
-  },
-  patientBlob: {
-    position: "absolute",
-    borderRadius: 999,
-    opacity: 0.16,
-  },
-  patientBlobTL: {
-    width: 320,
-    height: 320,
-    backgroundColor: "#8AE0D9",
-    top: -120,
-    left: -110,
-  },
-  patientBlobBR: {
-    width: 260,
-    height: 260,
-    backgroundColor: "#063F3B",
-    bottom: -88,
-    right: -70,
-  },
-  patientBlobMid: {
-    width: 180,
-    height: 180,
-    backgroundColor: "#F2A93B",
-    top: 310,
-    left: -50,
-    opacity: 0.09,
-  },
-  patientArc: {
-    position: "absolute",
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.11)",
-  },
-  patientArcOne: {
-    width: 220,
-    height: 220,
-    top: -70,
-    right: -65,
-  },
-  patientArcTwo: {
-    width: 140,
-    height: 140,
-    top: 28,
-    right: 18,
-  },
-  patientArcThree: {
-    width: 220,
-    height: 220,
-    bottom: 110,
-    left: -88,
-    borderColor: "rgba(255,255,255,0.08)",
   },
   container: {
     flexGrow: 1,
@@ -1147,37 +1078,24 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
   doctorHeroTitle: {
-    fontSize: 17,
+    fontSize: 32,
     fontWeight: "800",
     color: "#0F172A",
-    lineHeight: 24,
+    lineHeight: 40,
+    textAlign: "center",
   },
   doctorHeroSubtitle: {
-    fontSize: 14,
+    fontSize: 15,
     color: "#475569",
     lineHeight: 20,
+    textAlign: "center",
+    marginBottom: 16,
   },
   patientContainer: {
     flexGrow: 1,
-    paddingHorizontal: 20,
-    paddingTop: 72,
+    paddingHorizontal: 24,
+    paddingTop: 80,
     paddingBottom: 28,
-  },
-  patientHeader: {
-    marginTop: 8,
-    marginBottom: 14,
-  },
-  patientHeaderTitle: {
-    fontSize: 28,
-    color: "#FFFFFF",
-    ...fontStyles.display,
-  },
-  patientHeaderSubtitle: {
-    marginTop: 6,
-    fontSize: 14,
-    lineHeight: 20,
-    color: "rgba(255,255,255,0.86)",
-    ...fontStyles.body,
   },
   title: {
     fontSize: 24,
@@ -1194,22 +1112,25 @@ const styles = StyleSheet.create({
     marginTop: 0,
   },
   patientPanel: {
-    borderRadius: 24,
+    borderRadius: 22,
     backgroundColor: "#FFFFFF",
     paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 16,
     borderWidth: 1,
-    borderColor: "#DFEBE8",
-    elevation: 0,
-    shadowOpacity: 0,
+    borderColor: "#E2E8F0",
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.08,
+    shadowRadius: 18,
+    elevation: 3,
   },
   patientMethodTabs: {
     flexDirection: "row",
     gap: 8,
     padding: 4,
     borderRadius: 16,
-    backgroundColor: "#F1F6F5",
+    backgroundColor: "#EFF4F8",
   },
   patientMethodTab: {
     flex: 1,
@@ -1221,11 +1142,11 @@ const styles = StyleSheet.create({
   patientMethodTabActive: {
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#D7EAE7",
+    borderColor: "#D9E2EC",
   },
   patientMethodTabText: {
     fontSize: 13,
-    color: "#6B7F7D",
+    color: "#64748B",
     ...fontStyles.bold,
   },
   patientMethodTabTextActive: {
@@ -1236,32 +1157,10 @@ const styles = StyleSheet.create({
   },
   formPanel: {
     borderRadius: 18,
-    backgroundColor: "#FCFEFD",
+    backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#E5EEEC",
+    borderColor: "#E2E8F0",
     padding: 16,
-  },
-  formPanelTitle: {
-    fontSize: 16,
-    color: "#1F2937",
-    ...fontStyles.heading,
-  },
-  formPanelSubtitle: {
-    marginTop: 4,
-    fontSize: 12.5,
-    lineHeight: 18,
-    color: "#62706E",
-    ...fontStyles.body,
-  },
-  patientLottieWrap: {
-    marginTop: 18,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  patientLottie: {
-    width: "100%",
-    height: 320,
-    maxWidth: 400,
   },
   languageFloating: {
     position: "absolute",
@@ -1281,7 +1180,7 @@ const styles = StyleSheet.create({
     color: "#64748B",
   },
   patientLanguageLabel: {
-    color: "rgba(255,255,255,0.92)",
+    color: "#334155",
   },
   languageDropdownWrap: {
     alignItems: "flex-end",
@@ -1295,7 +1194,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#DDE7E5",
+    borderColor: "#D9E2EC",
     backgroundColor: "#FFFFFF",
   },
   languageDropdownText: {
@@ -1315,7 +1214,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#E6F2F0",
+    borderColor: "#E2E8F0",
     shadowColor: "#0F172A",
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.08,
@@ -1544,13 +1443,13 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    backgroundColor: "#F3FBF9",
+    backgroundColor: "#F8FAFC",
     borderWidth: 1,
-    borderColor: "#D9EEE9",
+    borderColor: "#E2E8F0",
   },
   patientStatusText: {
     textAlign: "center",
-    color: "#236761",
+    color: "#0F172A",
     fontSize: 12.5,
     fontWeight: "600",
     lineHeight: 18,
