@@ -1,0 +1,903 @@
+// src/controllers/chatController.js
+import fetch from 'node-fetch';
+import { createClient } from '@supabase/supabase-js';
+import { generateContent, buildRequestBody, MODEL_ID, BASE_URL, extractTextFromUploads, extractImagesFromUploads } from '../helpers/gemini.js';
+import { searchImages } from '../helpers/imageSearch.js';
+import { MEDISETU_PROMPT } from '../prompts/doc.js';
+import YouTubeMCP from '../helpers/youtubeSearch.js';
+import env from '../config/env.js';
+import { processMermaidBlocks } from '../helpers/mermaid.js';
+
+const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
+
+// Initialize YouTube MCP
+const youtubeMCP = env.YOUTUBE_API_KEY ? new YouTubeMCP(env.YOUTUBE_API_KEY) : null;
+if (!youtubeMCP) {
+  console.warn('⚠️  YouTube API key not configured - YouTube search will be disabled');
+}
+
+const STREAM_FINISH_DEBOUNCE_MS = 80;
+const STREAM_CLOSE_DELAY_MS = 60;
+const sleep = (ms = 0) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Fetch page title from URL
+ * @param {string} url - The URL to fetch title from
+ * @returns {Promise<string>} - The page title or fallback
+ */
+async function fetchPageTitle(url) {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      },
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const html = await response.text();
+    const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+    let title = titleMatch ? titleMatch[1].trim() : '';
+
+    if (title) {
+      title = title.replace(/\s+/g, ' ').trim();
+      if (title.length > 100) {
+        title = title.substring(0, 97) + '...';
+      }
+    }
+
+    if (!title) {
+      const urlObj = new URL(url);
+      title = urlObj.hostname.replace(/^www\./, '');
+    }
+
+    return title;
+  } catch (error) {
+    try {
+      const urlObj = new URL(url);
+      return urlObj.hostname.replace(/^www\./, '');
+    } catch (e) {
+      return 'Link';
+    }
+  }
+}
+
+function buildContextualSearchQuery({ prompt, history, extra, maxLength = 200 }) {
+  const trimmedPrompt = typeof prompt === 'string' ? prompt.trim() : '';
+  const extraText = typeof extra === 'string' ? extra.trim() : '';
+  const userSnippets = [];
+  const assistantSnippets = [];
+  if (Array.isArray(history) && history.length) {
+    const chronological = [...history].reverse();
+    for (let i = chronological.length - 1; i >= 0; i -= 1) {
+      const message = chronological[i];
+      const text = typeof message?.content === 'string' ? message.content.trim() : '';
+      if (!text) {
+        continue;
+      }
+      if (message.role === 'user' && userSnippets.length < 2) {
+        userSnippets.push(text);
+      } else if (message.role === 'model' && assistantSnippets.length < 1) {
+        assistantSnippets.push(text);
+      }
+      if (userSnippets.length >= 2 && assistantSnippets.length >= 1) {
+        break;
+      }
+    }
+  }
+  const segments = [];
+  segments.push(...userSnippets.reverse(), ...assistantSnippets.reverse());
+  if (extraText) {
+    segments.push(extraText);
+  }
+  if (trimmedPrompt) {
+    segments.push(trimmedPrompt);
+  }
+  const normalized = segments
+    .map((segment) => segment.replace(/\s+/g, ' ').trim())
+    .filter(Boolean);
+  if (!normalized.length) {
+    return '';
+  }
+  const combined = normalized.join(' | ');
+  return combined.length > maxLength ? combined.slice(0, maxLength) : combined;
+}
+
+/**
+ * Search YouTube videos using MCP
+ * @param {string} query - Search query
+ * @param {string} userId - User ID for rate limiting
+ * @returns {Promise<Array>} - Array of video results
+ */
+async function searchYouTubeVideos(query, userId) {
+  if (!youtubeMCP) {
+    console.log('[YouTube MCP] YouTube search disabled - no API key configured');
+    return [];
+  }
+
+  try {
+    console.log('[YouTube MCP] Searching for:', query);
+    const result = await youtubeMCP.search({
+      query,
+      maxResults: 5,
+      order: 'relevance',
+      userId
+    });
+
+    if (result.success && result.results) {
+      console.log(`[YouTube MCP] Found ${result.results.length} videos`);
+      return result.results;
+    }
+
+    return [];
+  } catch (error) {
+    console.error('[YouTube MCP] Search failed:', error.message);
+    // Don't fail the entire request if YouTube search fails
+    return [];
+  }
+}
+
+// Generate chat response and store in conversation
+export async function handleChatGenerate(req, res) {
+  try {
+    const start = Date.now();
+    // For multipart/form-data, fields come as strings; parse options safely
+    const { prompt, conversationId } = req.body || {};
+    let { options } = req.body || {};
+    if (options && typeof options === 'string') {
+      try { options = JSON.parse(options); } catch { options = {}; }
+    }
+    options = options || {};
+
+    if (!prompt) {
+      return res.status(400).json({ error: "Prompt is required" });
+    }
+
+    // userId is set by optionalAuth middleware
+    const userId = req.userId;
+    let currentConversationId = conversationId;
+
+    // After getting the userId from req.userId
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('username, email') // Select the fields you need
+      .eq('id', userId)
+      .single();
+
+    if (userError) {
+      console.error('Error fetching user data:', userError);
+      // Handle error or continue without username
+    }
+
+    const username = userData?.username || 'User';
+    const userEmail = userData?.email || '';
+
+    console.log('[handleChatGenerate] User info:', { userId, username, userEmail });
+
+    // If no conversation ID provided, create a new conversation
+    if (!currentConversationId) {
+      const { data: conversation, error: convError } = await supabase
+        .from('conversations')
+        .insert({
+          user_id: userId,
+          title: prompt.substring(0, 50) + (prompt.length > 50 ? '...' : '')
+        })
+        .select()
+        .single();
+
+      if (convError) {
+        console.error('Error creating conversation:', convError);
+        return res.status(500).json({ error: 'Failed to create conversation' });
+      }
+
+      currentConversationId = conversation.id;
+    }
+
+    // Get last 10 messages for context
+    const { data: messages, error: historyError } = await supabase
+      .from('messages')
+      .select('role, content, sources, images, videos, excalidraw')
+      .eq('conversation_id', currentConversationId)
+      .order('created_at', { ascending: false })
+      .limit(10);
+
+    if (historyError) {
+      console.error('Error fetching history:', historyError);
+      return res.status(500).json({ error: 'Failed to fetch conversation history' });
+    }
+
+    // Reverse to get chronological order
+    const chatHistory = messages ? [...messages].reverse().map(m => ({
+      role: m.role,
+      parts: [{ text: m.content }]
+    })) : [];
+
+    // Add current user message to history
+    chatHistory.push({
+      role: 'user',
+      parts: [{ text: prompt }]
+    });
+
+    // Determine includeSearch similar to geminiController: default false if files provided
+    const uploads = Array.isArray(req.files) ? req.files : [];
+    const effectiveIncludeSearch = typeof options.includeSearch === 'boolean'
+      ? options.includeSearch
+      : (uploads.length === 0);
+
+    // Generate AI response
+    const response = await generateContent(prompt, userId, {
+      history: chatHistory.slice(-10), // Only keep last 10 messages for context
+      includeSearch: effectiveIncludeSearch,
+      uploads,
+      username,
+      // Reset history when new files arrive unless explicitly kept
+      resetHistory: uploads.length > 0 && options.keepHistoryWithFiles !== true
+    });
+
+    const processingTime = Date.now() - start;
+    const includeImageSearch = options.includeImageSearch !== false;
+    const contextualImageQuery = buildContextualSearchQuery({ prompt, history: messages });
+    const imageResults = includeImageSearch && contextualImageQuery
+      ? await searchImages(contextualImageQuery)
+      : [];
+
+    const aiContent = response?.content || response?.text || '';
+    const aiSources = Array.isArray(response?.sources) ? response.sources : [];
+    const aiCodeSnippets = Array.isArray(response?.codeSnippets) ? response.codeSnippets : [];
+    const aiExecutionOutputs = Array.isArray(response?.executionOutputs) ? response.executionOutputs : [];
+    const aiExcalidrawData = Array.isArray(response?.excalidrawData) ? response.excalidrawData : null;
+
+    // If content is empty but we have excalidrawData, add a default message
+    let finalContent = aiContent;
+    if (!finalContent && aiExcalidrawData && aiExcalidrawData.length > 0) {
+      finalContent = "I've created a flowchart for you. You can view, download, or expand it below.";
+    }
+
+    const { error: saveError } = await supabase
+      .from('messages')
+      .insert([
+        {
+          conversation_id: currentConversationId,
+          role: 'user',
+          content: prompt,
+          sources: [],
+          images: null
+        },
+        {
+          conversation_id: currentConversationId,
+          role: 'model',
+          content: finalContent,
+          sources: aiSources,
+          images: imageResults.length > 0 ? imageResults : null,
+          excalidraw: aiExcalidrawData // Store in new column
+        }
+      ]);
+
+    if (saveError) {
+      console.error('Error saving messages:', saveError);
+      // Don't fail the request, just log the error
+    }
+
+    // Optionally bump conversation updated_at
+    await supabase
+      .from('conversations')
+      .update({ updated_at: new Date().toISOString() })
+      .eq('id', currentConversationId);
+
+    const apiResponse = {
+      content: finalContent,
+      sources: aiSources,
+      images: imageResults,
+      codeSnippets: aiCodeSnippets,
+      executionOutputs: aiExecutionOutputs,
+      excalidrawData: aiExcalidrawData, // Include in API response
+      timestamp: new Date().toISOString(),
+      processingTime,
+      attempts: response?.attempts || 1,
+      conversationId: currentConversationId
+    };
+
+    res.json(apiResponse);
+
+  } catch (error) {
+    console.error('Error in handleChatGenerate:', error);
+    res.status(500).json({
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
+}
+
+// Stream chat response with database persistence
+export async function handleChatStreamGenerate(req, res) {
+  try {
+    const { prompt: rawPrompt, conversationId } = req.body || {};
+    // Parse options (may be JSON string for multipart)
+    let { options: rawOptions } = req.body || {};
+    if (rawOptions && typeof rawOptions === 'string') {
+      try { rawOptions = JSON.parse(rawOptions); } catch { rawOptions = {}; }
+    }
+    const options = typeof rawOptions === 'object' && rawOptions !== null ? rawOptions : {};
+    const prompt = String(rawPrompt || '').trim();
+
+    if (!prompt) {
+      return res.status(400).json({ error: "Prompt is required" });
+    }
+
+    const userId = req.userId;
+    let currentConversationId = conversationId;
+    let streamedContent = '';
+    const streamedSources = new Set();
+    let finalSourcesWithTitles = []; // Store final sources to save to DB
+    let streamedExcalidrawData = []; // Capture generated charts
+    let streamComplete = false; // Track if we received finishReason: "STOP"
+    let lastFinishReason = null; // Store the finish reason for validation
+    // After getting the userId from req.userId
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('username, email') // Select the fields you need
+      .eq('id', userId)
+      .single();
+
+    if (userError) {
+      console.error('Error fetching user data:', userError);
+      // Handle error or continue without username
+    }
+
+    const username = userData?.username || 'User';
+    const userEmail = userData?.email || '';
+
+    console.log('[handleChatStreamGenerate] User info:', { userId, username, userEmail });
+    // If no conversation ID provided, create a new conversation
+    if (!currentConversationId) {
+      const { data: conversation, error: convError } = await supabase
+        .from('conversations')
+        .insert({
+          user_id: userId,
+          title: prompt.substring(0, 50) + (prompt.length > 50 ? '...' : '')
+        })
+        .select()
+        .single();
+
+      if (convError) {
+        console.error('Error creating conversation:', convError);
+        return res.status(500).json({ error: 'Failed to create conversation' });
+      }
+
+      currentConversationId = conversation.id;
+    }
+
+    // Get conversation history for context
+    const { data: messages, error: historyError } = await supabase
+      .from('messages')
+      .select('role, content, sources, images, videos')
+      .eq('conversation_id', currentConversationId)
+      .order('created_at', { ascending: false })
+      .limit(10);
+
+    if (historyError) {
+      console.error('Error fetching history:', historyError);
+      return res.status(500).json({ error: 'Failed to fetch conversation history' });
+    }
+
+    // Build chat history for Gemini (prior messages)
+    const chatHistory = messages ? [...messages].reverse().map(m => ({
+      role: m.role,
+      parts: [{ text: m.content }]
+    })) : [];
+
+    // If uploads provided via multipart/form-data, include their extracted text and images
+    let composedText = String(prompt);
+    let imageParts = [];
+    let uploadedText = '';
+    try {
+      const files = Array.isArray(req.files) ? req.files : [];
+      if (files.length) {
+        const extractedText = await extractTextFromUploads(files);
+        const uploadedImages = await extractImagesFromUploads(files);
+        if (extractedText) {
+          uploadedText = extractedText;
+          composedText += `\n\n--- Uploaded Files Text ---\n${extractedText}`;
+        }
+        if (uploadedImages.length) {
+          imageParts = uploadedImages.map(img => ({ inlineData: { mimeType: img.mimeType, data: img.data } }));
+        }
+      }
+    } catch (_) {
+      // ignore upload extraction errors to keep streaming resilient
+    }
+
+    // Add current user message (text + any image inlineData)
+    const userParts = [{ text: composedText }, ...imageParts];
+    chatHistory.push({
+      role: 'user',
+      parts: userParts
+    });
+
+    // Default includeSearch to false when files exist unless explicitly overridden
+    const files = Array.isArray(req.files) ? req.files : [];
+    const includeSearch = typeof options.includeSearch === 'boolean' ? options.includeSearch : (files.length === 0);
+    const includeImageSearch = options.includeImageSearch !== false;
+    const includeYouTube = options.includeYouTube === true; // Opt-in for YouTube search
+    const systemPrompt = options.systemPrompt || MEDISETU_PROMPT({ username });
+    const uploadContext = uploadedText ? uploadedText.slice(0, 400) : '';
+    const contextualSearchQuery = buildContextualSearchQuery({ prompt, history: messages, extra: uploadContext });
+
+    const body = buildRequestBody(chatHistory.slice(-10), systemPrompt, includeSearch);
+    const url = `${BASE_URL}/${MODEL_ID}:streamGenerateContent?alt=sse&key=${env.GEMINI_API_KEY}`;
+
+    // Parallel search for images and YouTube videos
+    console.log('[chatStream] includeYouTube:', includeYouTube, 'contextualSearchQuery:', contextualSearchQuery);
+    const imageResultsPromise = includeImageSearch && contextualSearchQuery
+      ? searchImages(contextualSearchQuery)
+      : Promise.resolve([]);
+    const youtubeResultsPromise = includeYouTube && contextualSearchQuery
+      ? searchYouTubeVideos(contextualSearchQuery, userId)
+      : Promise.resolve(null);
+
+    const [imageResults, youtubeResultsPayload] = await Promise.all([imageResultsPromise, youtubeResultsPromise]);
+    console.log('[chatStream] youtubeResultsPayload:', youtubeResultsPayload);
+    const youtubeVideos = Array.isArray(youtubeResultsPayload)
+      ? youtubeResultsPayload
+      : Array.isArray(youtubeResultsPayload?.results)
+        ? youtubeResultsPayload.results
+        : [];
+    console.log('[chatStream] youtubeVideos count:', youtubeVideos.length);
+
+    // Prepare SSE response
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache, no-transform");
+    res.setHeader("Connection", "keep-alive");
+    res.flushHeaders?.();
+
+    // Send conversation ID immediately
+    res.write(`event: conversationId\n`);
+    res.write(`data: ${JSON.stringify({ conversationId: currentConversationId })}\n\n`);
+
+    if (imageResults.length > 0) {
+      res.write(`event: images\n`);
+      res.write(`data: ${JSON.stringify({ images: imageResults })}\n\n`);
+    }
+
+    if (youtubeVideos.length > 0) {
+      res.write(`event: youtubeResults\n`);
+      res.write(`data: ${JSON.stringify({ videos: youtubeVideos })}\n\n`);
+    }
+
+    const upstream = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "text/event-stream"
+      },
+      body: JSON.stringify(body)
+    });
+
+    if (!upstream.ok || !upstream.body) {
+      const txt = await upstream.text().catch(() => "");
+      res.write(`event: error\n`);
+      res.write(`data: ${JSON.stringify({ status: upstream.status, error: txt || upstream.statusText })}\n\n`);
+      return res.end();
+    }
+
+    // Track content for database persistence and emit SSE events for text, code, and sources
+    let sseBuffer = '';
+
+    const processSSEBlock = async (block) => {
+      const dataLine = block
+        .split(/\r?\n/)
+        .find(l => l.startsWith('data: '));
+
+      if (!dataLine) return;
+      const payload = dataLine.slice(6).trim();
+      if (!payload || payload === '[DONE]') return;
+
+      try {
+        const obj = JSON.parse(payload);
+        const cand = obj?.candidates?.[0];
+        const parts = cand?.content?.parts;
+        if (Array.isArray(parts)) {
+          for (const p of parts) {
+            // Text chunks
+            if (typeof p?.text === 'string' && p.text.length) {
+              streamedContent += p.text;
+              res.write(`event: message\n`);
+              res.write(`data: ${JSON.stringify({ text: p.text })}\n\n`);
+            }
+
+            // Executable code
+            if (p?.executableCode && typeof p.executableCode.code === 'string') {
+              const codePayload = {
+                language: p.executableCode.language || 'unknown',
+                code: p.executableCode.code
+              };
+              res.write(`event: code\n`);
+              res.write(`data: ${JSON.stringify(codePayload)}\n\n`);
+            }
+
+            // Code execution result
+            if (p?.codeExecutionResult && typeof p.codeExecutionResult.output === 'string') {
+              const resultPayload = {
+                outcome: p.codeExecutionResult.outcome || 'unknown',
+                output: p.codeExecutionResult.output
+              };
+              res.write(`event: codeResult\n`);
+              res.write(`data: ${JSON.stringify(resultPayload)}\n\n`);
+            }
+
+            // Function calls (e.g., Excalidraw generation)
+            if (p?.functionCall) {
+              console.log('[chatStream] Function call detected:', p.functionCall);
+
+              // Handle Excalidraw flowchart generation
+              if (p.functionCall.name === 'generate_excalidraw_flowchart') {
+                try {
+                  console.log('[chatStream] Executing Excalidraw generation');
+                  const { generateExcalidrawFlowchart } = await import('../helpers/groq.js');
+                  const flowchartData = await generateExcalidrawFlowchart(
+                    p.functionCall.args.prompt,
+                    {
+                      style: p.functionCall.args.style || 'modern',
+                      complexity: p.functionCall.args.complexity || 'detailed'
+                    }
+                  );
+
+                  // Capture for DB save
+                  streamedExcalidrawData.push(flowchartData);
+
+                  // Emit excalidraw event
+                  res.write(`event: excalidraw\n`);
+                  res.write(`data: ${JSON.stringify({ excalidrawData: [flowchartData] })}\n\n`);
+
+                  // Also emit a text message about the flowchart
+                  const message = "I've created a flowchart for you. You can view, download, or expand it below.";
+                  streamedContent += message;
+                  res.write(`event: message\n`);
+                  res.write(`data: ${JSON.stringify({ text: message })}\n\n`);
+
+                  console.log('[chatStream] Excalidraw flowchart generated and emitted');
+                } catch (error) {
+                  console.error('[chatStream] Error generating Excalidraw:', error);
+                  const errorMsg = `\n\n[Note: Failed to generate flowchart: ${error.message}]`;
+                  streamedContent += errorMsg;
+                  res.write(`event: message\n`);
+                  res.write(`data: ${JSON.stringify({ text: errorMsg })}\n\n`);
+                }
+              }
+            }
+          }
+        }
+
+        // Collect sources from grounding metadata if present
+        const groundingChunks = cand?.groundingMetadata?.groundingChunks;
+        if (Array.isArray(groundingChunks)) {
+          for (const gc of groundingChunks) {
+            const uri = gc?.web?.uri;
+            if (typeof uri === 'string' && uri.startsWith('http')) {
+              streamedSources.add(uri);
+            }
+          }
+          if (groundingChunks.length) {
+            console.log(
+              '[chatStream] collected grounding URLs from chunk:',
+              groundingChunks.map(g => g?.web?.uri).filter(Boolean)
+            );
+          }
+        }
+
+        // Track finish reason to ensure stream completion
+        if (cand?.finishReason) {
+          lastFinishReason = cand.finishReason;
+          if (cand.finishReason === 'STOP') {
+            streamComplete = true;
+            console.log('[chatStream] Received finishReason: STOP - stream is complete');
+          }
+          const emitFinish = () => {
+            if (res.writableEnded) return;
+            res.write(`event: finish\n`);
+            res.write(`data: ${JSON.stringify({ finishReason: cand.finishReason })}\n\n`);
+          };
+
+          if (cand.finishReason === 'STOP') {
+            setTimeout(emitFinish, STREAM_FINISH_DEBOUNCE_MS);
+          } else {
+            emitFinish();
+          }
+        }
+      } catch (e) {
+        // Most parse errors will be due to partial JSON; the remainder stays in sseBuffer
+        console.warn('Failed to parse SSE JSON block:', e.message);
+      }
+    };
+
+    upstream.body.on("data", async (chunk) => {
+      const chunkStr = chunk.toString();
+      console.log('Received chunk from Gemini:', chunkStr);
+      sseBuffer += chunkStr;
+
+      // Split into SSE blocks; last block may be incomplete and stays in buffer
+      const blocks = sseBuffer.split(/\r?\n\r?\n/);
+      sseBuffer = blocks.pop() || '';
+
+      for (const block of blocks) {
+        await processSSEBlock(block);
+      }
+    });
+
+    upstream.body.on("end", async () => {
+      console.log('Gemini stream ended');
+      console.log(`[chatStream] Stream completion status: streamComplete=${streamComplete}, lastFinishReason=${lastFinishReason}, contentLength=${streamedContent.length}`);
+
+      // Process any trailing buffer that lacked the final delimiter
+      if (sseBuffer.trim().length > 0) {
+        console.log('[chatStream] Flushing trailing SSE buffer block');
+        await processSSEBlock(sseBuffer);
+        sseBuffer = '';
+      }
+
+      try {
+        let mermaidProcessingResult = { content: streamedContent, blocks: [] };
+        try {
+          mermaidProcessingResult = await processMermaidBlocks({
+            content: streamedContent,
+            prompt,
+            userId,
+          });
+          streamedContent = mermaidProcessingResult.content;
+          if (mermaidProcessingResult.blocks.length > 0 && !res.writableEnded) {
+            res.write(`event: mermaid\n`);
+            res.write(`data: ${JSON.stringify({ blocks: mermaidProcessingResult.blocks })}\n\n`);
+          }
+        } catch (mermaidError) {
+          console.warn('Mermaid processing failed:', mermaidError?.message || mermaidError);
+        }
+
+        if (streamedSources.size > 0) {
+          console.log(`[chatStream] emitting sources from streamed grounding: count=${streamedSources.size}`);
+          // Resolve titles for sources concurrently (limit simple)
+          const urls = Array.from(streamedSources);
+          const titlePromises = urls.map(async (u) => ({ url: u, title: await fetchPageTitle(u) }));
+          try {
+            finalSourcesWithTitles = await Promise.all(titlePromises);
+          } catch (_) {
+            finalSourcesWithTitles = urls.map(u => ({ url: u }));
+          }
+
+          // Emit structured sources event
+          console.log('[chatStream] sourcesWithTitles:', finalSourcesWithTitles);
+          res.write(`event: sources\n`);
+          res.write(`data: ${JSON.stringify({ sources: finalSourcesWithTitles })}\n\n`);
+        } else {
+          console.log('[chatStream] no streamed grounding sources found; emitting empty sources event');
+          if (!res.writableEnded) {
+            res.write(`event: sources\n`);
+            res.write(`data: {"sources": []}\n\n`);
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to emit sources/title message:', e?.message || e);
+      }
+
+      // Save messages to database ONLY after streaming completes with finishReason: STOP
+      try {
+        if (!streamComplete) {
+          console.warn('[chatStream] WARNING: Stream ended without finishReason: STOP. Content may be incomplete. streamComplete=', streamComplete, 'lastFinishReason=', lastFinishReason);
+        }
+
+        console.log(`[chatStream] Saving to database: contentLength=${streamedContent.length}, sourcesCount=${finalSourcesWithTitles.length}, streamComplete=${streamComplete}`);
+
+        const { data: insertedStreamMessages, error: saveError } = await supabase
+          .from('messages')
+          .insert([
+            {
+              conversation_id: currentConversationId,
+              role: 'user',
+              content: prompt,
+              sources: []
+            },
+            {
+              conversation_id: currentConversationId,
+              role: 'model',
+              content: streamedContent,
+              sources: finalSourcesWithTitles,
+              images: imageResults,
+              videos: youtubeVideos.length > 0 ? youtubeVideos : null,
+              excalidraw: streamedExcalidrawData.length > 0 ? streamedExcalidrawData : null
+            }
+          ]);
+
+        if (saveError) {
+          console.error('Error saving streamed messages:', saveError);
+        } else {
+          console.log(`[chatStream] Successfully saved messages with ${finalSourcesWithTitles.length} sources and ${streamedContent.length} characters`);
+        }
+
+        // Update conversation timestamp
+        await supabase
+          .from('conversations')
+          .update({ updated_at: new Date().toISOString() })
+          .eq('id', currentConversationId);
+
+      } catch (dbError) {
+        console.error('Database error after streaming:', dbError);
+      }
+
+      await sleep(STREAM_CLOSE_DELAY_MS);
+      res.end();
+    });
+
+    upstream.body.on("error", (err) => {
+      console.error('Gemini stream error:', err);
+      try {
+        res.write(`event: error\n`);
+        res.write(`data: ${JSON.stringify({ message: err?.message || "stream error" })}\n\n`);
+      } finally {
+        res.end();
+      }
+    });
+
+  } catch (error) {
+    console.error('Error in handleChatStreamGenerate:', error);
+    // Ensure we don't hang the stream on unexpected errors
+    try {
+      if (!res.headersSent) {
+        res.setHeader("Content-Type", "text/event-stream");
+        res.setHeader("Cache-Control", "no-cache, no-transform");
+        res.setHeader("Connection", "keep-alive");
+        res.flushHeaders?.();
+      }
+      if (!res.writableEnded) {
+        res.write(`event: error\n`);
+        res.write(`data: ${JSON.stringify({ message: error?.message || 'stream error' })}\n\n`);
+      }
+    } catch (_) {
+      // swallow
+    } finally {
+      if (!res.writableEnded) {
+        try { res.end(); } catch { }
+      }
+    }
+  }
+}
+
+// Get all conversations for the authenticated user
+export async function getConversations(req, res) {
+  try {
+    const userId = req.userId;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { data: conversations, error } = await supabase
+      .from('conversations')
+      .select('id, title, created_at, updated_at')
+      .eq('user_id', userId)
+      .order('updated_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching conversations:', error);
+      return res.status(500).json({ error: 'Failed to fetch conversations' });
+    }
+
+    res.json(conversations);
+  } catch (error) {
+    console.error('Error in getConversations:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+export async function getConversationHistory(req, res) {
+  try {
+    const { conversationId } = req.params;
+    const userId = req.userId;
+
+    if (!conversationId) {
+      return res.status(400).json({ error: 'Conversation ID is required' });
+    }
+
+    // Fetch conversation and verify ownership (if user is authenticated)
+    const { data: conversation, error: convError } = await supabase
+      .from('conversations')
+      .select('id, user_id, title, created_at, updated_at')
+      .eq('id', conversationId)
+      .single();
+
+    if (convError || !conversation) {
+      return res.status(404).json({ error: 'Conversation not found' });
+    }
+    if (userId && conversation.user_id && conversation.user_id !== userId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const { data: messages, error: messagesError } = await supabase
+      .from('messages')
+      .select('id, role, content, sources, charts, images, videos, excalidraw, created_at')
+      .eq('conversation_id', conversationId)
+      .order('created_at', { ascending: true });
+
+    if (messagesError) {
+      console.error('Error fetching conversation history:', messagesError);
+      return res.status(500).json({ error: 'Failed to fetch conversation history' });
+    }
+
+    res.json({
+      id: conversation.id,
+      title: conversation.title,
+      user_id: conversation.user_id,
+      created_at: conversation.created_at,
+      updated_at: conversation.updated_at,
+      messages: messages || []
+    });
+  } catch (error) {
+    console.error('Error in getConversationHistory:', error);
+    const isNetwork = (error?.message || '').toLowerCase().includes('fetch failed');
+    res.status(isNetwork ? 503 : 500).json({
+      error: isNetwork ? 'Supabase network error while fetching conversation' : error.message,
+      hint: isNetwork ? 'Verify SUPABASE_URL/SUPABASE_ANON_KEY and internet connectivity on the server' : undefined
+    });
+  }
+}
+
+// Delete a conversation and its messages (requires authentication)
+export async function deleteConversation(req, res) {
+  try {
+    const { conversationId } = req.params;
+    const userId = req.userId;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    if (!conversationId) {
+      return res.status(400).json({ error: 'Conversation ID is required' });
+    }
+
+    // Verify ownership
+    const { data: conversation, error: convError } = await supabase
+      .from('conversations')
+      .select('id, user_id')
+      .eq('id', conversationId)
+      .single();
+
+    if (convError || !conversation) {
+      return res.status(404).json({ error: 'Conversation not found' });
+    }
+    if (conversation.user_id !== userId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    // Delete messages first
+    const { error: msgDelError } = await supabase
+      .from('messages')
+      .delete()
+      .eq('conversation_id', conversationId);
+    if (msgDelError) {
+      console.error('Error deleting messages:', msgDelError);
+      return res.status(500).json({ error: 'Failed to delete conversation messages' });
+    }
+
+    // Delete conversation
+    const { error: convDelError } = await supabase
+      .from('conversations')
+      .delete()
+      .eq('id', conversationId);
+    if (convDelError) {
+      console.error('Error deleting conversation:', convDelError);
+      return res.status(500).json({ error: 'Failed to delete conversation' });
+    }
+
+    return res.json({ success: true });
+  } catch (error) {
+    console.error('Error in deleteConversation:', error);
+    res.status(500).json({ error: error.message });
+  }
+}

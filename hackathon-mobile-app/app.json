@@ -1,0 +1,44 @@
+{
+  "expo": {
+    "name": "ArogyaGram",
+    "slug": "arogyagram",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.umairmomin.hackathon-mobile-app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Allow ArogyaGram to access your camera to capture ABHA card photos.",
+        "NSPhotoLibraryUsageDescription": "Allow ArogyaGram to access your photos to upload ABHA card images.",
+        "NSPhotoLibraryAddUsageDescription": "Allow ArogyaGram to save ABHA card images to your library."
+      }
+    },
+    "android": {
+      "permissions": [
+        "CAMERA",
+        "READ_MEDIA_IMAGES",
+        "READ_EXTERNAL_STORAGE",
+        "CAMERA",
+        "READ_MEDIA_IMAGES",
+        "READ_EXTERNAL_STORAGE"
+      ],
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "package": "com.umairmomin.hackathonmobileapp"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}
