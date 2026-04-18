@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { scheduleAncReminders, requestNotificationPermission } from "../services/NotificationService";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { AuthContext } from "../context/AuthContext";
@@ -29,7 +30,7 @@ import { normalizeAncInputs, riskTone, statusLabel } from "../services/ancAssess
 const quickActions = [
   { title: "Talk to Doctor", icon: "message-square", color: "#5DC1B9", route: "Chat" },
   { title: "Health Records", icon: "file-text", color: "#F97316", route: "HealthRecords" },
-  { title: "Find Medicine", icon: "package", color: "#6366F1", route: "MedicineRecords" },
+  { title: "My Calendar", icon: "calendar", color: "#6366F1", route: "Calendar" },
   { title: "Call with Ai", icon: "mic", color: "#EC4899", route: "VapiCall" },
 ];
 
@@ -138,6 +139,13 @@ export default function PatientDashboardMock() {
   const dashboardAssessment = useMemo(() => assess(normalizedAncInputs), [normalizedAncInputs]);
   const currentRiskTone = riskTone(dashboardAssessment.riskBand);
   const currentBadge = badgeStyles(currentRiskTone);
+
+  // ── Schedule ANC notifications whenever profile/assessment updates
+  useEffect(() => {
+    if (!activeUser || !dashboardAssessment) return;
+    const name = activeUser?.abha_profile?.firstName || activeUser?.name?.split(" ")[0] || "Patient";
+    scheduleAncReminders(activeUser, dashboardAssessment, name).catch(() => {});
+  }, [activeUser, dashboardAssessment]);
 
   const firstName =
     activeUser?.abha_profile?.firstName ||
