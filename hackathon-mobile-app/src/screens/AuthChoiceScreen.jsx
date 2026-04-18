@@ -17,6 +17,7 @@ import {
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
+import LottieView from "lottie-react-native";
 import { useTranslation } from "react-i18next";
 import {
   uploadAbhaCard,
@@ -29,7 +30,6 @@ import {
 } from "../services/api";
 import { AuthContext } from "../context/AuthContext";
 import MotionReveal from "../components/MotionReveal";
-import AccordionBody from "../components/AccordionBody";
 import { fontStyles } from "../theme/typography";
 
 const ROLE_LABELS = {
@@ -50,6 +50,13 @@ const PATIENT_EXPERIENCE_COPY = {
       "Choose the quickest safe path to continue care, whether the ANM has an ABHA ID, an ABHA card photo, or only a phone number.",
     methodAbha: "Best for linked records and referral continuity across PHCs.",
     methodMobile: "Fast fallback for field use when identity details are not immediately available.",
+    abdmLabel: "ABDM | PHC Verified Portal",
+    abdmTitle: "ABDM-compatible identity and record continuity",
+    abdmPoints: [
+      "Supports ABHA-linked access for verified maternal and neonatal records",
+      "Helps PHCs and sub-centres keep referral context connected across visits",
+      "Keeps registration practical for field workers when digital identity is available",
+    ],
     proofLabel: "Why this feels trustworthy",
     proofPoints: [
       "Supports low-connectivity workflows for village-level care",
@@ -76,6 +83,13 @@ const PATIENT_EXPERIENCE_COPY = {
       "कम नेटवर्क वाले गांव-स्तर के care workflow को सपोर्ट करता है",
       "स्पष्ट rationale और referral context के साथ मानव निर्णय को केंद्र में रखता है",
       "फ्रंटलाइन टीम के लिए English और भारतीय भाषाओं में काम करता है",
+    ],
+    abdmLabel: "ABDM | PHC Verified Portal",
+    abdmTitle: "ABDM-compatible identity and record continuity",
+    abdmPoints: [
+      "Supports ABHA-linked access for verified maternal and neonatal records",
+      "Helps PHCs and sub-centres keep referral context connected across visits",
+      "Keeps registration practical for field workers when digital identity is available",
     ],
     abhaHint: "ABHA चुनें जब आप रिकॉर्ड्स को लंबी अवधि तक जोड़े रखना चाहते हैं.",
     mobileHint: "OTP चुनें जब फील्ड में मां को जल्दी access देना हो.",
@@ -116,7 +130,6 @@ export default function AuthChoiceScreen({ navigation, route }) {
   const [doctorOtpSending, setDoctorOtpSending] = useState(false);
   const [doctorOtpVerifying, setDoctorOtpVerifying] = useState(false);
   const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
-  const [expandedInfoCard, setExpandedInfoCard] = useState("safety");
   const { signIn } = useContext(AuthContext);
   const languageAnim = useRef(new Animated.Value(0)).current;
 
@@ -389,18 +402,20 @@ export default function AuthChoiceScreen({ navigation, route }) {
     setStatus("");
   };
 
-  const toggleInfoCard = (cardKey) => {
-    animateLayout();
-    setExpandedInfoCard((current) => (current === cardKey ? null : cardKey));
-  };
-
   const languageOptions = ["en", "hi", "pa", "mr", "ur", "ta"];
   const currentLanguageLabel = t(`common.lang_${i18n.language}`, i18n.language);
 
   const renderLanguagePicker = () => (
     <View style={styles.languageFloating}>
       <View style={styles.languageRow}>
-        <Text style={styles.languageLabel}>{t("common.language")}</Text>
+        <Text
+          style={[
+            styles.languageLabel,
+            role === "patient" && styles.patientLanguageLabel,
+          ]}
+        >
+          {t("common.language")}
+        </Text>
         <View style={styles.languageDropdownWrap}>
           <Pressable
             style={styles.languageDropdownTrigger}
@@ -728,193 +743,48 @@ export default function AuthChoiceScreen({ navigation, route }) {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <MotionReveal delay={40}>
-            <LinearGradient
-              colors={["rgba(255,255,255,0.22)", "rgba(255,255,255,0.1)"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.patientHero}
-            >
-              <View style={styles.patientHeroHeader}>
-                <View style={styles.patientHeroBadge}>
-                  <View style={styles.patientHeroBadgeDot} />
-                  <Text style={styles.patientHeroBadgeText}>
-                    ABDM | PHC Verified Portal
-                  </Text>
-                </View>
-                <View style={styles.patientHeroLogoWrap}>
-                  <Image
-                    source={require("../../assets/splash-icon.png")}
-                    style={styles.patientHeroLogo}
-                    resizeMode="contain"
-                  />
-                </View>
-              </View>
-              <Text style={styles.patientHeroEyebrow}>
-                {patientExperienceCopy.heroEyebrow}
-              </Text>
-              <Text style={styles.patientHeroTitle}>
-                {patientExperienceCopy.heroTitle}
-              </Text>
-              <Text style={styles.patientHeroSubtitle}>
-                {patientExperienceCopy.heroSubtitle}
-              </Text>
-              <View style={styles.signalRow}>
-                {patientExperienceCopy.signals.map((signal) => (
-                  <View key={signal} style={styles.signalPill}>
-                    <Text style={styles.signalPillText}>{signal}</Text>
-                  </View>
-                ))}
-              </View>
-            </LinearGradient>
+          <MotionReveal delay={40} style={styles.patientHeader}>
+            <Text style={styles.patientHeaderTitle}>
+              {t("auth.patient_login_title")}
+            </Text>
+            <Text style={styles.patientHeaderSubtitle}>
+              {t("auth.choose_verify")}
+            </Text>
           </MotionReveal>
 
-          <MotionReveal delay={100} style={styles.patientInfoStack}>
-            <View style={styles.infoAccordion}>
-              <Pressable
-                style={styles.infoAccordionHeader}
-                onPress={() => toggleInfoCard("safety")}
-              >
-                <View style={styles.infoBadge}>
-                  <Text style={styles.infoBadgeText}>PS</Text>
-                </View>
-                <Text style={styles.infoAccordionTitle}>
-                  {patientExperienceCopy.heroEyebrow}
-                </Text>
-                <Text style={styles.infoAccordionIcon}>
-                  {expandedInfoCard === "safety" ? "-" : "+"}
-                </Text>
-              </Pressable>
-              <AccordionBody
-                open={expandedInfoCard === "safety"}
-                style={styles.infoAccordionBody}
-              >
-                <Text style={styles.infoBodyTitle}>
-                  {patientExperienceCopy.heroTitle}
-                </Text>
-                <Text style={styles.infoBodyText}>
-                  {patientExperienceCopy.heroSubtitle}
-                </Text>
-                <View style={styles.signalRow}>
-                  {patientExperienceCopy.signals.map((signal) => (
-                    <View key={signal} style={styles.infoSignalPill}>
-                      <Text style={styles.infoSignalPillText}>{signal}</Text>
-                    </View>
-                  ))}
-                </View>
-              </AccordionBody>
-            </View>
-
-            <View style={styles.infoAccordion}>
-              <Pressable
-                style={styles.infoAccordionHeader}
-                onPress={() => toggleInfoCard("trust")}
-              >
-                <View style={[styles.infoBadge, styles.infoBadgeSoft]}>
-                  <Text style={[styles.infoBadgeText, styles.infoBadgeTextSoft]}>
-                    AI
-                  </Text>
-                </View>
-                <Text style={styles.infoAccordionTitle}>
-                  {patientExperienceCopy.proofLabel}
-                </Text>
-                <Text style={styles.infoAccordionIcon}>
-                  {expandedInfoCard === "trust" ? "-" : "+"}
-                </Text>
-              </Pressable>
-              <AccordionBody
-                open={expandedInfoCard === "trust"}
-                style={styles.infoAccordionBody}
-              >
-                <View style={styles.infoProofList}>
-                  {patientExperienceCopy.proofPoints.map((point, index) => (
-                    <View key={point} style={styles.proofRow}>
-                      <View style={styles.proofIndex}>
-                        <Text style={styles.proofIndexText}>{index + 1}</Text>
-                      </View>
-                      <Text style={styles.proofText}>{point}</Text>
-                    </View>
-                  ))}
-                </View>
-              </AccordionBody>
-            </View>
-          </MotionReveal>
-
-          <MotionReveal delay={160} style={styles.patientPanelMotion}>
+          <MotionReveal delay={100} style={styles.patientPanelMotion}>
             <View style={styles.patientPanel}>
-              <View style={styles.patientPanelHeader}>
-                <View>
-                  <Text style={styles.patientPanelLabel}>
-                    {patientExperienceCopy.accessLabel}
-                  </Text>
-                  <Text style={styles.patientPanelTitle}>
-                    {t("auth.patient_login_title")}
-                  </Text>
-                </View>
-                <View style={styles.patientPanelChip}>
-                  <Text style={styles.patientPanelChipText}>
-                    {currentLanguageLabel}
-                  </Text>
-                </View>
-              </View>
-              <Text style={styles.patientPanelSubtitle}>
-                {patientExperienceCopy.accessSubtitle}
-              </Text>
-
-              <View style={styles.methodStack}>
+              <View style={styles.patientMethodTabs}>
                 <Pressable
                   style={[
-                    styles.methodCard,
-                    patientMethod === "abha" && styles.methodCardActive,
+                    styles.patientMethodTab,
+                    patientMethod === "abha" && styles.patientMethodTabActive,
                   ]}
                   onPress={() => switchPatientMethod("abha")}
                 >
-                  <View style={styles.methodHeaderRow}>
-                    <Text
-                      style={[
-                        styles.methodTitle,
-                        patientMethod === "abha" && styles.methodTitleActive,
-                      ]}
-                    >
-                      {t("auth.login_with_abha")}
-                    </Text>
-                    <View
-                      style={[
-                        styles.methodStateDot,
-                        patientMethod === "abha" && styles.methodStateDotActive,
-                      ]}
-                    />
-                  </View>
-                  <Text style={styles.methodDescription}>
-                    {patientExperienceCopy.methodAbha}
+                  <Text
+                    style={[
+                      styles.patientMethodTabText,
+                      patientMethod === "abha" && styles.patientMethodTabTextActive,
+                    ]}
+                  >
+                    {t("auth.login_with_abha")}
                   </Text>
                 </Pressable>
-
                 <Pressable
                   style={[
-                    styles.methodCard,
-                    patientMethod === "mobile" && styles.methodCardActive,
+                    styles.patientMethodTab,
+                    patientMethod === "mobile" && styles.patientMethodTabActive,
                   ]}
                   onPress={() => switchPatientMethod("mobile")}
                 >
-                  <View style={styles.methodHeaderRow}>
-                    <Text
-                      style={[
-                        styles.methodTitle,
-                        patientMethod === "mobile" && styles.methodTitleActive,
-                      ]}
-                    >
-                      {t("auth.login_with_mobile")}
-                    </Text>
-                    <View
-                      style={[
-                        styles.methodStateDot,
-                        patientMethod === "mobile" && styles.methodStateDotActive,
-                      ]}
-                    />
-                  </View>
-                  <Text style={styles.methodDescription}>
-                    {patientExperienceCopy.methodMobile}
+                  <Text
+                    style={[
+                      styles.patientMethodTabText,
+                      patientMethod === "mobile" && styles.patientMethodTabTextActive,
+                    ]}
+                  >
+                    {t("auth.login_with_mobile")}
                   </Text>
                 </Pressable>
               </View>
@@ -1118,15 +988,17 @@ export default function AuthChoiceScreen({ navigation, route }) {
                   <Text style={styles.patientStatusText}>{status}</Text>
                 </View>
               ) : null}
-
-              <View style={styles.patientFooterMeta}>
-                <View style={styles.patientFooterLine} />
-                <Text style={styles.patientFooterText}>
-                  Powered by AI | Evidence-based
-                </Text>
-                <View style={styles.patientFooterLine} />
-              </View>
             </View>
+          </MotionReveal>
+
+          <MotionReveal delay={150} style={styles.patientLottieWrap}>
+            <LottieView
+              source={require("../../assets/Patient.json")}
+              autoPlay
+              loop={false}
+              style={styles.patientLottie}
+              resizeMode="contain"
+            />
           </MotionReveal>
         </ScrollView>
 
@@ -1231,9 +1103,25 @@ const styles = StyleSheet.create({
   },
   patientContainer: {
     flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingTop: 76,
+    paddingHorizontal: 20,
+    paddingTop: 72,
     paddingBottom: 28,
+  },
+  patientHeader: {
+    marginTop: 8,
+    marginBottom: 14,
+  },
+  patientHeaderTitle: {
+    fontSize: 28,
+    color: "#FFFFFF",
+    ...fontStyles.display,
+  },
+  patientHeaderSubtitle: {
+    marginTop: 6,
+    fontSize: 14,
+    lineHeight: 20,
+    color: "rgba(255,255,255,0.86)",
+    ...fontStyles.body,
   },
   title: {
     fontSize: 24,
@@ -1245,336 +1133,55 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: "#6B7280",
   },
-  patientHero: {
-    borderRadius: 30,
-    paddingHorizontal: 20,
-    paddingTop: 18,
-    paddingBottom: 22,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.22)",
-    backgroundColor: "rgba(255,255,255,0.08)",
-    shadowColor: "#063F3B",
-    shadowOffset: { width: 0, height: 14 },
-    shadowOpacity: 0.22,
-    shadowRadius: 22,
-    elevation: 8,
-  },
-  patientHeroHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-  },
-  patientHeroBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 7,
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.24)",
-    backgroundColor: "rgba(255,255,255,0.14)",
-  },
-  patientHeroBadgeDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: "#F2A93B",
-  },
-  patientHeroBadgeText: {
-    fontSize: 10.5,
-    color: "rgba(255,255,255,0.92)",
-    textTransform: "uppercase",
-    letterSpacing: 0.8,
-    ...fontStyles.bold,
-  },
-  patientHeroLogoWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
-    backgroundColor: "rgba(255,255,255,0.16)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.26)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  patientHeroLogo: {
-    width: 28,
-    height: 28,
-  },
-  patientHeroEyebrow: {
-    marginTop: 18,
-    fontSize: 12.5,
-    color: "#D7F7F3",
-    textTransform: "uppercase",
-    letterSpacing: 0.9,
-    ...fontStyles.bold,
-  },
-  patientHeroTitle: {
-    marginTop: 10,
-    fontSize: 28,
-    lineHeight: 34,
-    color: "#FFFFFF",
-    ...fontStyles.display,
-  },
-  patientHeroSubtitle: {
-    marginTop: 10,
-    fontSize: 13.5,
-    lineHeight: 20,
-    color: "rgba(255,255,255,0.84)",
-    ...fontStyles.body,
-  },
-  patientInfoStack: {
-    marginTop: 16,
-    gap: 12,
-  },
-  infoAccordion: {
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.2)",
-    backgroundColor: "rgba(255,255,255,0.14)",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    shadowColor: "#063F3B",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.12,
-    shadowRadius: 18,
-    elevation: 4,
-  },
-  infoAccordionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  infoBadge: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: "rgba(255,255,255,0.16)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  infoBadgeSoft: {
-    backgroundColor: "rgba(255,255,255,0.12)",
-  },
-  infoBadgeText: {
-    fontSize: 11,
-    color: "#D8FFF9",
-    ...fontStyles.bold,
-  },
-  infoBadgeTextSoft: {
-    color: "#D9ECFF",
-  },
-  infoAccordionTitle: {
-    flex: 1,
-    fontSize: 15,
-    color: "#FFFFFF",
-    ...fontStyles.heading,
-  },
-  infoAccordionIcon: {
-    fontSize: 20,
-    fontWeight: "500",
-    color: "rgba(255,255,255,0.88)",
-    lineHeight: 22,
-  },
-  infoAccordionBody: {
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: "rgba(255,255,255,0.14)",
-  },
-  infoBodyTitle: {
-    fontSize: 17,
-    color: "#FFFFFF",
-    lineHeight: 24,
-    ...fontStyles.heading,
-  },
-  infoBodyText: {
-    marginTop: 8,
-    fontSize: 13.5,
-    lineHeight: 20,
-    color: "rgba(255,255,255,0.84)",
-    ...fontStyles.body,
-  },
-  signalRow: {
-    marginTop: 12,
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  signalPill: {
-    paddingHorizontal: 11,
-    paddingVertical: 6,
-    borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.14)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.18)",
-  },
-  signalPillText: {
-    fontSize: 12,
-    color: "#FFFFFF",
-    ...fontStyles.bold,
-  },
-  infoSignalPill: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.12)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.16)",
-  },
-  infoSignalPillText: {
-    fontSize: 12,
-    color: "#E8FFFB",
-    ...fontStyles.bold,
-  },
-  infoProofList: {
-    gap: 10,
-  },
-  proofRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 10,
-  },
-  proofIndex: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: "rgba(255,255,255,0.14)",
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.16)",
-  },
-  proofIndexText: {
-    fontSize: 11,
-    color: "#FFFFFF",
-    ...fontStyles.bold,
-  },
-  proofText: {
-    flex: 1,
-    fontSize: 13,
-    lineHeight: 18,
-    color: "rgba(255,255,255,0.84)",
-    ...fontStyles.body,
-  },
   patientPanelMotion: {
-    marginTop: 18,
+    marginTop: 0,
   },
   patientPanel: {
-    borderRadius: 28,
-    backgroundColor: "rgba(248, 252, 253, 0.98)",
-    paddingHorizontal: 18,
-    paddingTop: 18,
-    paddingBottom: 18,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.2)",
-    shadowColor: "#063F3B",
-    shadowOffset: { width: 0, height: 14 },
-    shadowOpacity: 0.16,
-    shadowRadius: 22,
-    elevation: 6,
-  },
-  patientPanelHeader: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    gap: 12,
-  },
-  patientPanelLabel: {
-    fontSize: 12,
-    color: "#0F766E",
-    textTransform: "uppercase",
-    letterSpacing: 0.6,
-    ...fontStyles.bold,
-  },
-  patientPanelTitle: {
-    marginTop: 6,
-    fontSize: 24,
-    color: "#1F2937",
-    ...fontStyles.heading,
-  },
-  patientPanelChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 999,
-    backgroundColor: "#E7FAF8",
-    borderWidth: 1,
-    borderColor: "#CFF3EF",
-  },
-  patientPanelChipText: {
-    fontSize: 12,
-    color: "#0F766E",
-    ...fontStyles.bold,
-  },
-  patientPanelSubtitle: {
-    marginTop: 6,
-    fontSize: 13.5,
-    lineHeight: 19,
-    color: "#6B7280",
-    ...fontStyles.body,
-  },
-  methodStack: {
-    marginTop: 16,
-    gap: 10,
-  },
-  methodCard: {
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 13,
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
+    borderRadius: 24,
     backgroundColor: "#FFFFFF",
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 16,
+    borderWidth: 1,
+    borderColor: "#DFEBE8",
+    elevation: 0,
+    shadowOpacity: 0,
   },
-  methodCardActive: {
-    borderColor: "#5DC1B9",
-    backgroundColor: "#F0FFFD",
-    shadowColor: "#5DC1B9",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 2,
-  },
-  methodHeaderRow: {
+  patientMethodTabs: {
     flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
+    gap: 8,
+    padding: 4,
+    borderRadius: 16,
+    backgroundColor: "#F1F6F5",
   },
-  methodTitle: {
+  patientMethodTab: {
     flex: 1,
-    fontSize: 15,
-    color: "#24353B",
-    ...fontStyles.heading,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    borderRadius: 12,
   },
-  methodTitleActive: {
+  patientMethodTabActive: {
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#D7EAE7",
+  },
+  patientMethodTabText: {
+    fontSize: 13,
+    color: "#6B7F7D",
+    ...fontStyles.bold,
+  },
+  patientMethodTabTextActive: {
     color: "#0F766E",
-  },
-  methodStateDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: "#D4DBDE",
-  },
-  methodStateDotActive: {
-    backgroundColor: "#5DC1B9",
-  },
-  methodDescription: {
-    marginTop: 6,
-    fontSize: 12.5,
-    lineHeight: 18,
-    color: "#6B7280",
-    ...fontStyles.body,
   },
   motionSection: {
-    marginTop: 14,
+    marginTop: 16,
   },
   formPanel: {
-    borderRadius: 22,
-    backgroundColor: "#FFFFFF",
+    borderRadius: 18,
+    backgroundColor: "#FCFEFD",
     borderWidth: 1,
-    borderColor: "#E2E8F0",
+    borderColor: "#E5EEEC",
     padding: 16,
   },
   formPanelTitle: {
@@ -1583,29 +1190,21 @@ const styles = StyleSheet.create({
     ...fontStyles.heading,
   },
   formPanelSubtitle: {
-    marginTop: 6,
+    marginTop: 4,
     fontSize: 12.5,
     lineHeight: 18,
-    color: "#6B7280",
+    color: "#62706E",
     ...fontStyles.body,
   },
-  patientFooterMeta: {
-    marginTop: 16,
-    flexDirection: "row",
+  patientLottieWrap: {
+    marginTop: 18,
     alignItems: "center",
-    gap: 10,
+    justifyContent: "center",
   },
-  patientFooterLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: "#D6E6E8",
-  },
-  patientFooterText: {
-    fontSize: 10.5,
-    color: "#6B7280",
-    textTransform: "uppercase",
-    letterSpacing: 0.7,
-    ...fontStyles.bold,
+  patientLottie: {
+    width: "100%",
+    height: 320,
+    maxWidth: 400,
   },
   languageFloating: {
     position: "absolute",
@@ -1623,6 +1222,9 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "600",
     color: "#64748B",
+  },
+  patientLanguageLabel: {
+    color: "rgba(255,255,255,0.92)",
   },
   languageDropdownWrap: {
     alignItems: "flex-end",
@@ -1763,11 +1365,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderWidth: 1,
     borderColor: "#E2E8F0",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#F8FBFB",
   },
   subTabActive: {
-    backgroundColor: "#E7FAF8",
-    borderColor: "#5DC1B9",
+    backgroundColor: "#EAF7F5",
+    borderColor: "#8ED7D0",
   },
   subTabText: {
     fontSize: 12.5,
@@ -1799,13 +1401,13 @@ const styles = StyleSheet.create({
   patientInput: {
     marginTop: 8,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: "#DCE7E5",
     borderRadius: 14,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 16,
     color: "#111827",
-    backgroundColor: "#F9FAFB",
+    backgroundColor: "#FFFFFF",
   },
   uploadBlock: {
     marginTop: 12,
@@ -1818,14 +1420,17 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 12,
     borderRadius: 12,
-    backgroundColor: "#1F2937",
+    backgroundColor: "#EEF5F4",
+    borderWidth: 1,
+    borderColor: "#D7E7E3",
     alignItems: "center",
   },
   uploadButtonSecondary: {
-    backgroundColor: "#5DC1B9",
+    backgroundColor: "#DFF4F1",
+    borderColor: "#BEE7E1",
   },
   uploadButtonText: {
-    color: "#FFFFFF",
+    color: "#204543",
     fontSize: 12.5,
     fontWeight: "700",
   },
@@ -1833,7 +1438,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     borderRadius: 14,
     padding: 12,
-    backgroundColor: "#F8FAFC",
+    backgroundColor: "#F7FBFB",
     alignItems: "center",
     gap: 6,
   },
@@ -1850,7 +1455,7 @@ const styles = StyleSheet.create({
   helperText: {
     marginTop: 8,
     fontSize: 12,
-    color: "#94A3B8",
+    color: "#7A8C8A",
     lineHeight: 16,
   },
   primaryButton: {
@@ -1862,15 +1467,12 @@ const styles = StyleSheet.create({
   },
   patientPrimaryButton: {
     marginTop: 18,
-    backgroundColor: "#5DC1B9",
+    backgroundColor: "#4DBDB5",
     paddingVertical: 14,
     borderRadius: 14,
     alignItems: "center",
-    shadowColor: "#5DC1B9",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.18,
-    shadowRadius: 18,
-    elevation: 4,
+    elevation: 0,
+    shadowOpacity: 0,
   },
   primaryButtonText: {
     color: "#FFFFFF",
@@ -1885,13 +1487,13 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    backgroundColor: "#F0FDFA",
+    backgroundColor: "#F3FBF9",
     borderWidth: 1,
-    borderColor: "#CCFBF1",
+    borderColor: "#D9EEE9",
   },
   patientStatusText: {
     textAlign: "center",
-    color: "#0F766E",
+    color: "#236761",
     fontSize: 12.5,
     fontWeight: "600",
     lineHeight: 18,
