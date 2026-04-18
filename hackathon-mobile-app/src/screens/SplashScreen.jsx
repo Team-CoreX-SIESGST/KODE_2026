@@ -12,6 +12,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { AuthContext } from "../context/AuthContext";
+import { fontStyles } from "../theme/typography";
 
 export default function SplashScreen() {
   const navigation = useNavigation();
@@ -66,11 +67,13 @@ export default function SplashScreen() {
               source={require("../../assets/splash-icon.png")}
               style={styles.logo}
               resizeMode="contain"
-              accessibilityLabel="ArogyaGram logo"
+              accessibilityLabel="MAULI logo"
             />
           </Animated.View>
-          <Text style={styles.title}>ArogyaGram</Text>
-          <Text style={styles.subtitle}>Healthcare for Every Village</Text>
+          <Text style={styles.title}>MAULI</Text>
+          <Text style={styles.subtitle}>
+            {"Maternal Assessment & Unified Life-saving Intelligence"}
+          </Text>
         </View>
         <View style={styles.dotsRow} accessibilityLabel="Loading">
           <View style={[styles.dot, styles.dotActive]} />
@@ -126,6 +129,7 @@ const styles = StyleSheet.create({
     textShadowColor: "rgba(0, 0, 0, 0.15)",
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 6,
+    ...fontStyles.display,
   },
   subtitle: {
     marginTop: 6,
@@ -134,6 +138,7 @@ const styles = StyleSheet.create({
     color: "rgba(255, 255, 255, 0.9)",
     letterSpacing: 0.3,
     textAlign: "center",
+    ...fontStyles.body,
   },
   dotsRow: {
     flexDirection: "row",

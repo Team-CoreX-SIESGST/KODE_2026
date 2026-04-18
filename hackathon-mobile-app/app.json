@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "ArogyaGram",
-    "slug": "arogyagram",
+    "name": "MAULI",
+    "slug": "mauli",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -15,9 +15,9 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.umairmomin.hackathon-mobile-app",
       "infoPlist": {
-        "NSCameraUsageDescription": "Allow ArogyaGram to access your camera to capture ABHA card photos.",
-        "NSPhotoLibraryUsageDescription": "Allow ArogyaGram to access your photos to upload ABHA card images.",
-        "NSPhotoLibraryAddUsageDescription": "Allow ArogyaGram to save ABHA card images to your library."
+        "NSCameraUsageDescription": "Allow MAULI to access your camera to capture ABHA card photos.",
+        "NSPhotoLibraryUsageDescription": "Allow MAULI to access your photos to upload ABHA card images.",
+        "NSPhotoLibraryAddUsageDescription": "Allow MAULI to save ABHA card images to your library."
       }
     },
     "android": {

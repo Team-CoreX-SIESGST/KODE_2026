@@ -11,23 +11,27 @@ import {
   Easing,
 } from "react-native";
 import { useTranslation } from "react-i18next";
+import { fontStyles } from "../theme/typography";
 
 const roles = [
   {
     key: "patient",
-    descriptionKey: "role_selection.patient_desc",
+    title: "Patient / Beneficiary",
+    description: "View your own records and follow-up information.",
     icon: require("../../assets/female-icon.png"),
     background: "#F3FBFA",
   },
   {
     key: "doctor",
-    descriptionKey: "role_selection.doctor_desc",
+    title: "Medical Officer",
+    description: "Review cases, referrals, and clinical support tools.",
     icon: require("../../assets/male-doctor-icon.png"),
     background: "#F5FBFF",
   },
   {
     key: "asha",
-    descriptionKey: "role_selection.asha_desc",
+    title: "ANM / ASHA Worker",
+    description: "Capture visits, assess risk, and guide referrals.",
     icon: require("../../assets/male-icon.png"),
     background: "#FFF8EC",
   },
@@ -149,8 +153,13 @@ export default function RoleSelectionScreen({ navigation }) {
       <View style={styles.screen}>
         {renderLanguagePicker()}
         <ScrollView contentContainerStyle={styles.container}>
-          <Text style={styles.appName}>ArogyaGram</Text>
-          <Text style={styles.heading}>{t("role_selection.heading")}</Text>
+          <Text style={styles.appName}>MAULI</Text>
+          <Text style={styles.tagline}>
+            Maternal Assessment & Unified Life-saving Intelligence
+          </Text>
+          <Text style={styles.heading}>
+            Select how you want to continue in the app
+          </Text>
 
           <View style={styles.cardsBlock}>
             {roles.map((role) => {
@@ -173,10 +182,10 @@ export default function RoleSelectionScreen({ navigation }) {
                     />
                   </View>
                   <Text style={styles.cardTitle}>
-                    {t(`roles.${role.key}`)}
+                    {role.title}
                   </Text>
                   <Text style={styles.cardDescription}>
-                    {t(role.descriptionKey)}
+                    {role.description}
                   </Text>
                 </Pressable>
               );
@@ -192,7 +201,7 @@ export default function RoleSelectionScreen({ navigation }) {
             }
           >
             <Text style={styles.primaryButtonText}>
-              {t("role_selection.continue")}
+              Continue
             </Text>
           </Pressable>
         </View>
@@ -223,12 +232,22 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#1F2937",
     textAlign: "center",
+    ...fontStyles.display,
+  },
+  tagline: {
+    marginTop: 8,
+    fontSize: 15,
+    lineHeight: 21,
+    color: "#5B6776",
+    textAlign: "center",
+    ...fontStyles.body,
   },
   heading: {
-    marginTop: 6,
+    marginTop: 10,
     fontSize: 16,
     color: "#6B7280",
     textAlign: "center",
+    ...fontStyles.body,
   },
   cardsBlock: {
     marginTop: 22,
@@ -275,6 +294,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#1F2937",
     textAlign: "center",
+    ...fontStyles.heading,
   },
   cardDescription: {
     marginTop: 6,
@@ -282,6 +302,7 @@ const styles = StyleSheet.create({
     color: "#6B7280",
     textAlign: "center",
     lineHeight: 20,
+    ...fontStyles.body,
   },
   footer: {
     position: "absolute",
@@ -305,6 +326,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "600",
     color: "#64748B",
+    ...fontStyles.semibold,
   },
   languageDropdownWrap: {
     alignItems: "flex-end",
@@ -325,6 +347,7 @@ const styles = StyleSheet.create({
     fontSize: 12.5,
     fontWeight: "700",
     color: "#1F2937",
+    ...fontStyles.semibold,
   },
   languageChevron: {
     fontSize: 12,
@@ -358,6 +381,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "600",
     color: "#1F2937",
+    ...fontStyles.semibold,
   },
   languageMenuTextActive: {
     color: "#0F766E",
@@ -377,5 +401,6 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 18,
     fontWeight: "700",
+    ...fontStyles.bold,
   },
 });

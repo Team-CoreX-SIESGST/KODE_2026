@@ -9,6 +9,7 @@ import {
   Pressable,
   ScrollView,
 } from "react-native";
+import { fontStyles } from "../theme/typography";
 
 export default function LoginScreen({ navigation }) {
   return (
@@ -23,11 +24,11 @@ export default function LoginScreen({ navigation }) {
               source={require("../../assets/splash-icon.png")}
               style={styles.logo}
               resizeMode="contain"
-              accessibilityLabel="ArogyaGram logo"
+            accessibilityLabel="MAULI logo"
             />
           </View>
-          <Text style={styles.appName}>Arogyagram</Text>
-          <Text style={styles.tagline}>Your trusted healthcare partner</Text>
+          <Text style={styles.appName}>MAULI</Text>
+          <Text style={styles.tagline}>Maternal Assessment & Unified Life-saving Intelligence</Text>
         </View>
 
         <View style={styles.formBlock}>
@@ -65,7 +66,7 @@ export default function LoginScreen({ navigation }) {
           </Pressable>
 
           <Text style={styles.termsText}>
-            By proceeding, you agree to ArogyaGram's
+            By proceeding, you agree to MAULI's
             <Text style={styles.linkText}> Terms of Service </Text>
             and
             <Text style={styles.linkText}> Privacy Policy</Text>
@@ -73,7 +74,7 @@ export default function LoginScreen({ navigation }) {
         </View>
 
         <View style={styles.footerBlock}>
-          <Text style={styles.footerText}>New to ArogyaGram?</Text>
+          <Text style={styles.footerText}>New to MAULI?</Text>
           <Text style={styles.footerLink}>Register Now</Text>
         </View>
       </ScrollView>
@@ -119,11 +120,13 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "700",
     color: "#1F2937",
+    ...fontStyles.display,
   },
   tagline: {
     marginTop: 6,
     fontSize: 15,
     color: "#6B7280",
+    ...fontStyles.body,
   },
   formBlock: {
     marginTop: 28,
@@ -132,17 +135,20 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "700",
     color: "#1F2937",
+    ...fontStyles.heading,
   },
   subtitle: {
     marginTop: 6,
     fontSize: 15,
     color: "#6B7280",
+    ...fontStyles.body,
   },
   label: {
     marginTop: 22,
     fontSize: 14,
     fontWeight: "600",
     color: "#374151",
+    ...fontStyles.semibold,
   },
   inputRow: {
     marginTop: 10,
@@ -168,6 +174,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#9AA3AF",
     fontWeight: "600",
+    ...fontStyles.semibold,
   },
   input: {
     flex: 1,
@@ -175,6 +182,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     fontSize: 18,
     color: "#1F2937",
+    ...fontStyles.body,
   },
   primaryButton: {
     marginTop: 22,
@@ -196,6 +204,7 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 18,
     fontWeight: "700",
+    ...fontStyles.bold,
   },
   termsText: {
     marginTop: 18,
@@ -203,6 +212,7 @@ const styles = StyleSheet.create({
     fontSize: 12.5,
     color: "#9AA3AF",
     lineHeight: 18,
+    ...fontStyles.body,
   },
   linkText: {
     color: "#8A97A8",
@@ -217,10 +227,12 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: 14,
     color: "#6B7280",
+    ...fontStyles.body,
   },
   footerLink: {
     fontSize: 14,
     color: "#5DC1B9",
     fontWeight: "700",
+    ...fontStyles.bold,
   },
 });
