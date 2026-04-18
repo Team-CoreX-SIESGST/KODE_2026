@@ -7,7 +7,8 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "seed:abha": "node src/scripts/seed_abha_data.js"
+    "seed:abha": "node src/scripts/seed_abha_data.js",
+    "test": "node --test"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",

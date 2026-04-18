@@ -6,3 +6,5 @@ coverage/
 .expo
 .expo-shared
 node_modules
+__pycache__/
+*.pyc
