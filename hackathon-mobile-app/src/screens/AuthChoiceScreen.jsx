@@ -13,8 +13,10 @@ import {
   LayoutAnimation,
   Platform,
   UIManager,
+  StatusBar,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
+import { LinearGradient } from "expo-linear-gradient";
 import { useTranslation } from "react-i18next";
 import {
   uploadAbhaCard,
@@ -27,6 +29,8 @@ import {
 } from "../services/api";
 import { AuthContext } from "../context/AuthContext";
 import MotionReveal from "../components/MotionReveal";
+import AccordionBody from "../components/AccordionBody";
+import { fontStyles } from "../theme/typography";
 
 const ROLE_LABELS = {
   patient: "Patient",
@@ -694,88 +698,165 @@ export default function AuthChoiceScreen({ navigation, route }) {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.patientSafeArea}>
+      <StatusBar
+        barStyle="light-content"
+        translucent
+        backgroundColor="transparent"
+      />
       <View style={styles.patientScreen}>
+        <LinearGradient
+          colors={["#4DBDB5", "#2FA89F", "#1A8C84", "#0D6B64"]}
+          locations={[0, 0.35, 0.72, 1]}
+          start={{ x: 0.15, y: 0 }}
+          end={{ x: 0.85, y: 1 }}
+          style={styles.patientBackdrop}
+        >
+          <View style={styles.topAccentBar} />
+          <View style={[styles.patientBlob, styles.patientBlobTL]} />
+          <View style={[styles.patientBlob, styles.patientBlobBR]} />
+          <View style={[styles.patientBlob, styles.patientBlobMid]} />
+          <View style={[styles.patientArc, styles.patientArcOne]} />
+          <View style={[styles.patientArc, styles.patientArcTwo]} />
+          <View style={[styles.patientArc, styles.patientArcThree]} />
+        </LinearGradient>
+
         {renderLanguagePicker()}
 
-        <View style={styles.patientContainer}>
+        <ScrollView
+          contentContainerStyle={styles.patientContainer}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
           <MotionReveal delay={40}>
-            <View style={styles.patientInfoStack}>
+            <LinearGradient
+              colors={["rgba(255,255,255,0.22)", "rgba(255,255,255,0.1)"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.patientHero}
+            >
+              <View style={styles.patientHeroHeader}>
+                <View style={styles.patientHeroBadge}>
+                  <View style={styles.patientHeroBadgeDot} />
+                  <Text style={styles.patientHeroBadgeText}>
+                    ABDM | PHC Verified Portal
+                  </Text>
+                </View>
+                <View style={styles.patientHeroLogoWrap}>
+                  <Image
+                    source={require("../../assets/splash-icon.png")}
+                    style={styles.patientHeroLogo}
+                    resizeMode="contain"
+                  />
+                </View>
+              </View>
+              <Text style={styles.patientHeroEyebrow}>
+                {patientExperienceCopy.heroEyebrow}
+              </Text>
+              <Text style={styles.patientHeroTitle}>
+                {patientExperienceCopy.heroTitle}
+              </Text>
+              <Text style={styles.patientHeroSubtitle}>
+                {patientExperienceCopy.heroSubtitle}
+              </Text>
+              <View style={styles.signalRow}>
+                {patientExperienceCopy.signals.map((signal) => (
+                  <View key={signal} style={styles.signalPill}>
+                    <Text style={styles.signalPillText}>{signal}</Text>
+                  </View>
+                ))}
+              </View>
+            </LinearGradient>
+          </MotionReveal>
+
+          <MotionReveal delay={100} style={styles.patientInfoStack}>
+            <View style={styles.infoAccordion}>
               <Pressable
-                style={styles.infoAccordion}
+                style={styles.infoAccordionHeader}
                 onPress={() => toggleInfoCard("safety")}
               >
-                <View style={styles.infoAccordionHeader}>
-                  <View style={styles.infoBadge}>
-                    <Text style={styles.infoBadgeText}>PS</Text>
-                  </View>
-                  <Text style={styles.infoAccordionTitle}>
-                    {patientExperienceCopy.heroEyebrow}
-                  </Text>
-                  <Text style={styles.infoAccordionIcon}>
-                    {expandedInfoCard === "safety" ? "-" : "+"}
-                  </Text>
+                <View style={styles.infoBadge}>
+                  <Text style={styles.infoBadgeText}>PS</Text>
                 </View>
-                {expandedInfoCard === "safety" ? (
-                  <View style={styles.infoAccordionBody}>
-                    <Text style={styles.infoBodyTitle}>
-                      {patientExperienceCopy.heroTitle}
-                    </Text>
-                    <Text style={styles.infoBodyText}>
-                      {patientExperienceCopy.heroSubtitle}
-                    </Text>
-                    <View style={styles.signalRow}>
-                      {patientExperienceCopy.signals.map((signal) => (
-                        <View key={signal} style={styles.signalPill}>
-                          <Text style={styles.signalPillText}>{signal}</Text>
-                        </View>
-                      ))}
-                    </View>
-                  </View>
-                ) : null}
+                <Text style={styles.infoAccordionTitle}>
+                  {patientExperienceCopy.heroEyebrow}
+                </Text>
+                <Text style={styles.infoAccordionIcon}>
+                  {expandedInfoCard === "safety" ? "-" : "+"}
+                </Text>
               </Pressable>
+              <AccordionBody
+                open={expandedInfoCard === "safety"}
+                style={styles.infoAccordionBody}
+              >
+                <Text style={styles.infoBodyTitle}>
+                  {patientExperienceCopy.heroTitle}
+                </Text>
+                <Text style={styles.infoBodyText}>
+                  {patientExperienceCopy.heroSubtitle}
+                </Text>
+                <View style={styles.signalRow}>
+                  {patientExperienceCopy.signals.map((signal) => (
+                    <View key={signal} style={styles.infoSignalPill}>
+                      <Text style={styles.infoSignalPillText}>{signal}</Text>
+                    </View>
+                  ))}
+                </View>
+              </AccordionBody>
+            </View>
 
+            <View style={styles.infoAccordion}>
               <Pressable
-                style={styles.infoAccordion}
+                style={styles.infoAccordionHeader}
                 onPress={() => toggleInfoCard("trust")}
               >
-                <View style={styles.infoAccordionHeader}>
-                  <View style={[styles.infoBadge, styles.infoBadgeSoft]}>
-                    <Text style={[styles.infoBadgeText, styles.infoBadgeTextSoft]}>
-                      AI
-                    </Text>
-                  </View>
-                  <Text style={styles.infoAccordionTitle}>
-                    {patientExperienceCopy.proofLabel}
-                  </Text>
-                  <Text style={styles.infoAccordionIcon}>
-                    {expandedInfoCard === "trust" ? "-" : "+"}
+                <View style={[styles.infoBadge, styles.infoBadgeSoft]}>
+                  <Text style={[styles.infoBadgeText, styles.infoBadgeTextSoft]}>
+                    AI
                   </Text>
                 </View>
-                {expandedInfoCard === "trust" ? (
-                  <View style={styles.infoAccordionBody}>
-                    {patientExperienceCopy.proofPoints.map((point, index) => (
-                      <View key={point} style={styles.proofRow}>
-                        <View style={styles.proofIndex}>
-                          <Text style={styles.proofIndexText}>{index + 1}</Text>
-                        </View>
-                        <Text style={styles.proofText}>{point}</Text>
-                      </View>
-                    ))}
-                  </View>
-                ) : null}
+                <Text style={styles.infoAccordionTitle}>
+                  {patientExperienceCopy.proofLabel}
+                </Text>
+                <Text style={styles.infoAccordionIcon}>
+                  {expandedInfoCard === "trust" ? "-" : "+"}
+                </Text>
               </Pressable>
+              <AccordionBody
+                open={expandedInfoCard === "trust"}
+                style={styles.infoAccordionBody}
+              >
+                <View style={styles.infoProofList}>
+                  {patientExperienceCopy.proofPoints.map((point, index) => (
+                    <View key={point} style={styles.proofRow}>
+                      <View style={styles.proofIndex}>
+                        <Text style={styles.proofIndexText}>{index + 1}</Text>
+                      </View>
+                      <Text style={styles.proofText}>{point}</Text>
+                    </View>
+                  ))}
+                </View>
+              </AccordionBody>
             </View>
           </MotionReveal>
 
-          <MotionReveal delay={110} style={styles.patientPanelMotion}>
+          <MotionReveal delay={160} style={styles.patientPanelMotion}>
             <View style={styles.patientPanel}>
-              <Text style={styles.patientPanelLabel}>
-                {patientExperienceCopy.accessLabel}
-              </Text>
-              <Text style={styles.patientPanelTitle}>
-                {t("auth.patient_login_title")}
-              </Text>
+              <View style={styles.patientPanelHeader}>
+                <View>
+                  <Text style={styles.patientPanelLabel}>
+                    {patientExperienceCopy.accessLabel}
+                  </Text>
+                  <Text style={styles.patientPanelTitle}>
+                    {t("auth.patient_login_title")}
+                  </Text>
+                </View>
+                <View style={styles.patientPanelChip}>
+                  <Text style={styles.patientPanelChipText}>
+                    {currentLanguageLabel}
+                  </Text>
+                </View>
+              </View>
               <Text style={styles.patientPanelSubtitle}>
                 {patientExperienceCopy.accessSubtitle}
               </Text>
@@ -1037,9 +1118,17 @@ export default function AuthChoiceScreen({ navigation, route }) {
                   <Text style={styles.patientStatusText}>{status}</Text>
                 </View>
               ) : null}
+
+              <View style={styles.patientFooterMeta}>
+                <View style={styles.patientFooterLine} />
+                <Text style={styles.patientFooterText}>
+                  Powered by AI | Evidence-based
+                </Text>
+                <View style={styles.patientFooterLine} />
+              </View>
             </View>
           </MotionReveal>
-        </View>
+        </ScrollView>
 
         {languageMenuOpen && (
           <Pressable
@@ -1057,6 +1146,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#FFFFFF",
   },
+  patientSafeArea: {
+    flex: 1,
+    backgroundColor: "#4DBDB5",
+  },
   screen: {
     flex: 1,
     position: "relative",
@@ -1064,7 +1157,70 @@ const styles = StyleSheet.create({
   patientScreen: {
     flex: 1,
     position: "relative",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#4DBDB5",
+  },
+  patientBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  topAccentBar: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 3,
+    backgroundColor: "rgba(255,255,255,0.24)",
+  },
+  patientBlob: {
+    position: "absolute",
+    borderRadius: 999,
+    opacity: 0.16,
+  },
+  patientBlobTL: {
+    width: 320,
+    height: 320,
+    backgroundColor: "#8AE0D9",
+    top: -120,
+    left: -110,
+  },
+  patientBlobBR: {
+    width: 260,
+    height: 260,
+    backgroundColor: "#063F3B",
+    bottom: -88,
+    right: -70,
+  },
+  patientBlobMid: {
+    width: 180,
+    height: 180,
+    backgroundColor: "#F2A93B",
+    top: 310,
+    left: -50,
+    opacity: 0.09,
+  },
+  patientArc: {
+    position: "absolute",
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.11)",
+  },
+  patientArcOne: {
+    width: 220,
+    height: 220,
+    top: -70,
+    right: -65,
+  },
+  patientArcTwo: {
+    width: 140,
+    height: 140,
+    top: 28,
+    right: 18,
+  },
+  patientArcThree: {
+    width: 220,
+    height: 220,
+    bottom: 110,
+    left: -88,
+    borderColor: "rgba(255,255,255,0.08)",
   },
   container: {
     flexGrow: 1,
@@ -1074,11 +1230,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   patientContainer: {
-    flex: 1,
+    flexGrow: 1,
     paddingHorizontal: 24,
     paddingTop: 76,
-    paddingBottom: 20,
-    justifyContent: "space-between",
+    paddingBottom: 28,
   },
   title: {
     fontSize: 24,
@@ -1090,21 +1245,102 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: "#6B7280",
   },
+  patientHero: {
+    borderRadius: 30,
+    paddingHorizontal: 20,
+    paddingTop: 18,
+    paddingBottom: 22,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.22)",
+    backgroundColor: "rgba(255,255,255,0.08)",
+    shadowColor: "#063F3B",
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.22,
+    shadowRadius: 22,
+    elevation: 8,
+  },
+  patientHeroHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  patientHeroBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.24)",
+    backgroundColor: "rgba(255,255,255,0.14)",
+  },
+  patientHeroBadgeDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: "#F2A93B",
+  },
+  patientHeroBadgeText: {
+    fontSize: 10.5,
+    color: "rgba(255,255,255,0.92)",
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+    ...fontStyles.bold,
+  },
+  patientHeroLogoWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    backgroundColor: "rgba(255,255,255,0.16)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.26)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  patientHeroLogo: {
+    width: 28,
+    height: 28,
+  },
+  patientHeroEyebrow: {
+    marginTop: 18,
+    fontSize: 12.5,
+    color: "#D7F7F3",
+    textTransform: "uppercase",
+    letterSpacing: 0.9,
+    ...fontStyles.bold,
+  },
+  patientHeroTitle: {
+    marginTop: 10,
+    fontSize: 28,
+    lineHeight: 34,
+    color: "#FFFFFF",
+    ...fontStyles.display,
+  },
+  patientHeroSubtitle: {
+    marginTop: 10,
+    fontSize: 13.5,
+    lineHeight: 20,
+    color: "rgba(255,255,255,0.84)",
+    ...fontStyles.body,
+  },
   patientInfoStack: {
+    marginTop: 16,
     gap: 12,
   },
   infoAccordion: {
-    borderRadius: 20,
+    borderRadius: 22,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
-    backgroundColor: "#FFFFFF",
+    borderColor: "rgba(255,255,255,0.2)",
+    backgroundColor: "rgba(255,255,255,0.14)",
     paddingHorizontal: 16,
     paddingVertical: 14,
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.06,
-    shadowRadius: 16,
-    elevation: 3,
+    shadowColor: "#063F3B",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.12,
+    shadowRadius: 18,
+    elevation: 4,
   },
   infoAccordionHeader: {
     flexDirection: "row",
@@ -1115,50 +1351,51 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: "#E7FAF8",
+    backgroundColor: "rgba(255,255,255,0.16)",
     alignItems: "center",
     justifyContent: "center",
   },
   infoBadgeSoft: {
-    backgroundColor: "#EFF6FF",
+    backgroundColor: "rgba(255,255,255,0.12)",
   },
   infoBadgeText: {
     fontSize: 11,
-    fontWeight: "800",
-    color: "#0F766E",
+    color: "#D8FFF9",
+    ...fontStyles.bold,
   },
   infoBadgeTextSoft: {
-    color: "#2563EB",
+    color: "#D9ECFF",
   },
   infoAccordionTitle: {
     flex: 1,
     fontSize: 15,
-    fontWeight: "800",
-    color: "#1F2937",
+    color: "#FFFFFF",
+    ...fontStyles.heading,
   },
   infoAccordionIcon: {
     fontSize: 20,
     fontWeight: "500",
-    color: "#64748B",
+    color: "rgba(255,255,255,0.88)",
     lineHeight: 22,
   },
   infoAccordionBody: {
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: "#EEF2F7",
+    borderTopColor: "rgba(255,255,255,0.14)",
   },
   infoBodyTitle: {
     fontSize: 17,
-    fontWeight: "700",
-    color: "#111827",
+    color: "#FFFFFF",
     lineHeight: 24,
+    ...fontStyles.heading,
   },
   infoBodyText: {
     marginTop: 8,
     fontSize: 13.5,
     lineHeight: 20,
-    color: "#6B7280",
+    color: "rgba(255,255,255,0.84)",
+    ...fontStyles.body,
   },
   signalRow: {
     marginTop: 12,
@@ -1167,85 +1404,123 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   signalPill: {
-    paddingHorizontal: 10,
+    paddingHorizontal: 11,
     paddingVertical: 6,
     borderRadius: 999,
-    backgroundColor: "#E7FAF8",
+    backgroundColor: "rgba(255,255,255,0.14)",
     borderWidth: 1,
-    borderColor: "#CFF3EF",
+    borderColor: "rgba(255,255,255,0.18)",
   },
   signalPillText: {
     fontSize: 12,
-    fontWeight: "700",
-    color: "#0F766E",
+    color: "#FFFFFF",
+    ...fontStyles.bold,
+  },
+  infoSignalPill: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: "rgba(255,255,255,0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.16)",
+  },
+  infoSignalPillText: {
+    fontSize: 12,
+    color: "#E8FFFB",
+    ...fontStyles.bold,
+  },
+  infoProofList: {
+    gap: 10,
   },
   proofRow: {
-    marginTop: 10,
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 10,
   },
   proofIndex: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: "#E7FAF8",
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: "rgba(255,255,255,0.14)",
     alignItems: "center",
     justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.16)",
   },
   proofIndexText: {
     fontSize: 11,
-    fontWeight: "800",
-    color: "#0F766E",
+    color: "#FFFFFF",
+    ...fontStyles.bold,
   },
   proofText: {
     flex: 1,
     fontSize: 13,
     lineHeight: 18,
-    color: "#6B7280",
+    color: "rgba(255,255,255,0.84)",
+    ...fontStyles.body,
   },
   patientPanelMotion: {
-    marginTop: 14,
+    marginTop: 18,
   },
   patientPanel: {
-    borderRadius: 24,
-    backgroundColor: "#FFFFFF",
+    borderRadius: 28,
+    backgroundColor: "rgba(248, 252, 253, 0.98)",
     paddingHorizontal: 18,
     paddingTop: 18,
-    paddingBottom: 16,
+    paddingBottom: 18,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.08,
-    shadowRadius: 18,
-    elevation: 4,
+    borderColor: "rgba(255,255,255,0.2)",
+    shadowColor: "#063F3B",
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.16,
+    shadowRadius: 22,
+    elevation: 6,
+  },
+  patientPanelHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 12,
   },
   patientPanelLabel: {
     fontSize: 12,
-    fontWeight: "700",
     color: "#0F766E",
     textTransform: "uppercase",
-    letterSpacing: 0.5,
+    letterSpacing: 0.6,
+    ...fontStyles.bold,
   },
   patientPanelTitle: {
-    marginTop: 8,
-    fontSize: 22,
-    fontWeight: "700",
+    marginTop: 6,
+    fontSize: 24,
     color: "#1F2937",
+    ...fontStyles.heading,
+  },
+  patientPanelChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    backgroundColor: "#E7FAF8",
+    borderWidth: 1,
+    borderColor: "#CFF3EF",
+  },
+  patientPanelChipText: {
+    fontSize: 12,
+    color: "#0F766E",
+    ...fontStyles.bold,
   },
   patientPanelSubtitle: {
     marginTop: 6,
     fontSize: 13.5,
     lineHeight: 19,
     color: "#6B7280",
+    ...fontStyles.body,
   },
   methodStack: {
     marginTop: 16,
     gap: 10,
   },
   methodCard: {
-    borderRadius: 18,
+    borderRadius: 20,
     paddingHorizontal: 14,
     paddingVertical: 13,
     borderWidth: 1,
@@ -1254,7 +1529,7 @@ const styles = StyleSheet.create({
   },
   methodCardActive: {
     borderColor: "#5DC1B9",
-    backgroundColor: "#E7FAF8",
+    backgroundColor: "#F0FFFD",
     shadowColor: "#5DC1B9",
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.1,
@@ -1270,8 +1545,8 @@ const styles = StyleSheet.create({
   methodTitle: {
     flex: 1,
     fontSize: 15,
-    fontWeight: "800",
     color: "#24353B",
+    ...fontStyles.heading,
   },
   methodTitleActive: {
     color: "#0F766E",
@@ -1290,27 +1565,47 @@ const styles = StyleSheet.create({
     fontSize: 12.5,
     lineHeight: 18,
     color: "#6B7280",
+    ...fontStyles.body,
   },
   motionSection: {
     marginTop: 14,
   },
   formPanel: {
-    borderRadius: 20,
+    borderRadius: 22,
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
     borderColor: "#E2E8F0",
-    padding: 15,
+    padding: 16,
   },
   formPanelTitle: {
     fontSize: 16,
-    fontWeight: "700",
     color: "#1F2937",
+    ...fontStyles.heading,
   },
   formPanelSubtitle: {
     marginTop: 6,
     fontSize: 12.5,
     lineHeight: 18,
     color: "#6B7280",
+    ...fontStyles.body,
+  },
+  patientFooterMeta: {
+    marginTop: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  patientFooterLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#D6E6E8",
+  },
+  patientFooterText: {
+    fontSize: 10.5,
+    color: "#6B7280",
+    textTransform: "uppercase",
+    letterSpacing: 0.7,
+    ...fontStyles.bold,
   },
   languageFloating: {
     position: "absolute",

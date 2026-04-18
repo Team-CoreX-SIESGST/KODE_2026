@@ -143,5 +143,3 @@ hackathon-mobile-app/.expo/
 hackathon-mobile-app/.expo-shared/
 hackathon-mobile-app/android/
 hackathon-mobile-app/ios/
-*.json
-server/src/*.json
