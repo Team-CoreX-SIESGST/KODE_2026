@@ -187,6 +187,10 @@ function buildAssessmentSummary(record) {
   return factors.join(" | ");
 }
 
+function createVisitId() {
+  return `visit_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
 function buildVisitFromRecord(record) {
   const visitDate = record.date
     ? new Date(`${record.date}T09:00:00.000Z`).toISOString()
@@ -204,6 +208,7 @@ function buildVisitFromRecord(record) {
   const urineProtein = toUrineProteinLabel(record.urineProtein);
 
   return {
+    visitId: record.visitId || createVisitId(),
     visitType: "MATERNAL",
     visitDate,
     capturedByRole: "anm",
@@ -290,7 +295,7 @@ function buildVisitFromRecord(record) {
 function buildReportFromVisit(v) {
   const anc = v?.ancInputs || {};
   return {
-    reportId: v.visitDate,
+    reportId: v.visitId || v.visitDate,
     testName: "Maternal ANC Assessment",
     date: new Date(v.visitDate).toLocaleDateString(),
     rawDate: v.visitDate,
@@ -318,11 +323,15 @@ export const patientUpdateRecord = async (token, reportId, updates) => {
   const patient = getPatientByToken(token);
   if (!patient) throw new Error("Patient not found");
 
-  const index = (patient._visits || []).findIndex((visit) => visit.visitDate === reportId);
+  const index = (patient._visits || []).findIndex((visit) => (visit.visitId || visit.visitDate) === reportId);
   if (index === -1) throw new Error("Record not found");
 
-  const nextVisit = buildVisitFromRecord(updates);
-  nextVisit.visitDate = reportId;
+  const existingVisit = patient._visits[index];
+  const nextVisit = buildVisitFromRecord({
+    ...updates,
+    visitId: existingVisit.visitId || reportId,
+  });
+  nextVisit.visitDate = existingVisit.visitDate;
   patient._visits[index] = nextVisit;
 
   return { success: true, reportId, record: buildReportFromVisit(nextVisit), visit: nextVisit };
@@ -333,7 +342,7 @@ export const patientMe = async (token) => {
   return {
     ...patient,
     appointmentHistory: (patient._visits || []).map(v => ({
-      _id: v.visitDate,
+      _id: v.visitId || v.visitDate,
       doctorName: v.capturedByRole === 'anm' ? 'ANM Checkup' : 'Clinical Visit',
       preferredDate: new Date(v.visitDate).toLocaleDateString(),
       preferredTime: new Date(v.visitDate).toLocaleTimeString(),
