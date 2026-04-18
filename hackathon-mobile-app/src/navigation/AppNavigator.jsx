@@ -33,7 +33,13 @@ export default function AppNavigator() {
   return (
     <NavigationContainer ref={navigationRef}>
       <IncomingCallListener navigationRef={navigationRef} />
-      <Stack.Navigator initialRouteName="Splash">
+      <Stack.Navigator
+        initialRouteName="Splash"
+        screenOptions={{
+          animation: "fade_from_bottom",
+          contentStyle: { backgroundColor: "#F9F5EC" },
+        }}
+      >
         <Stack.Screen
           name="Splash"
           component={SplashScreen}

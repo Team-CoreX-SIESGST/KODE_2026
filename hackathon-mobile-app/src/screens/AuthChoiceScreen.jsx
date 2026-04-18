@@ -1,4 +1,4 @@
-import React, { useContext, useMemo, useRef, useState } from "react";
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   StyleSheet,
@@ -10,6 +10,9 @@ import {
   ScrollView,
   Animated,
   Easing,
+  LayoutAnimation,
+  Platform,
+  UIManager,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { useTranslation } from "react-i18next";
@@ -23,11 +26,57 @@ import {
   verifyDoctorOtp,
 } from "../services/api";
 import { AuthContext } from "../context/AuthContext";
+import MotionReveal from "../components/MotionReveal";
 
 const ROLE_LABELS = {
   patient: "Patient",
   doctor: "Doctor",
   asha: "ASHA Worker",
+};
+
+const PATIENT_EXPERIENCE_COPY = {
+  en: {
+    heroEyebrow: "Maternal & Neonatal Safety Net",
+    heroTitle: "Secure access for every mother, newborn, and frontline follow-up.",
+    heroSubtitle:
+      "Built for rural PHCs and sub-centres with offline-ready records, ABDM-compatible identity, and explainable referral support.",
+    signals: ["Offline-ready", "ABDM aligned", "Explainable referrals"],
+    accessLabel: "Field-ready secure entry",
+    accessSubtitle:
+      "Choose the quickest safe path to continue care, whether the ANM has an ABHA ID, an ABHA card photo, or only a phone number.",
+    methodAbha: "Best for linked records and referral continuity across PHCs.",
+    methodMobile: "Fast fallback for field use when identity details are not immediately available.",
+    proofLabel: "Why this feels trustworthy",
+    proofPoints: [
+      "Supports low-connectivity workflows for village-level care",
+      "Keeps human agency visible with clear rationale and referral context",
+      "Works in English and Indian regional languages for frontline teams",
+    ],
+    abhaHint: "Use ABHA when you want longitudinal records to stay connected.",
+    mobileHint: "Use OTP when the mother needs faster access in the field.",
+    uploadSelected: "ABHA card selected",
+  },
+  hi: {
+    heroEyebrow: "मातृ एवं नवजात सुरक्षा सहायता",
+    heroTitle: "हर मां, नवजात और फॉलो-अप देखभाल के लिए सुरक्षित प्रवेश.",
+    heroSubtitle:
+      "ग्रामीण PHC और सब-सेंटर के लिए तैयार, जिसमें offline-ready records, ABDM-compatible identity और explainable referral support शामिल है.",
+    signals: ["ऑफलाइन-तैयार", "ABDM अनुकूल", "समझाने योग्य रेफरल"],
+    accessLabel: "फील्ड-रेडी सुरक्षित प्रवेश",
+    accessSubtitle:
+      "सबसे तेज और सुरक्षित तरीका चुनें, चाहे ANM के पास ABHA ID हो, ABHA कार्ड की फोटो हो, या केवल मोबाइल नंबर हो.",
+    methodAbha: "लिंक्ड रिकॉर्ड्स और PHC रेफरल continuity के लिए बेहतर.",
+    methodMobile: "जब तुरंत पहचान विवरण उपलब्ध न हो तब फील्ड उपयोग के लिए तेज विकल्प.",
+    proofLabel: "यह भरोसेमंद क्यों लगता है",
+    proofPoints: [
+      "कम नेटवर्क वाले गांव-स्तर के care workflow को सपोर्ट करता है",
+      "स्पष्ट rationale और referral context के साथ मानव निर्णय को केंद्र में रखता है",
+      "फ्रंटलाइन टीम के लिए English और भारतीय भाषाओं में काम करता है",
+    ],
+    abhaHint: "ABHA चुनें जब आप रिकॉर्ड्स को लंबी अवधि तक जोड़े रखना चाहते हैं.",
+    mobileHint: "OTP चुनें जब फील्ड में मां को जल्दी access देना हो.",
+    uploadSelected: "ABHA कार्ड चुना गया",
+  },
 };
 
 export default function AuthChoiceScreen({ navigation, route }) {
@@ -36,6 +85,10 @@ export default function AuthChoiceScreen({ navigation, route }) {
   const roleLabel = useMemo(
     () => t(`roles.${role}`, ROLE_LABELS[role] || "User"),
     [role, t]
+  );
+  const patientExperienceCopy = useMemo(
+    () => PATIENT_EXPERIENCE_COPY[i18n.language] || PATIENT_EXPERIENCE_COPY.en,
+    [i18n.language]
   );
 
   const [patientMethod, setPatientMethod] = useState("abha");
@@ -59,8 +112,35 @@ export default function AuthChoiceScreen({ navigation, route }) {
   const [doctorOtpSending, setDoctorOtpSending] = useState(false);
   const [doctorOtpVerifying, setDoctorOtpVerifying] = useState(false);
   const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
+  const [expandedInfoCard, setExpandedInfoCard] = useState("safety");
   const { signIn } = useContext(AuthContext);
   const languageAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (
+      Platform.OS === "android" &&
+      UIManager.setLayoutAnimationEnabledExperimental
+    ) {
+      UIManager.setLayoutAnimationEnabledExperimental(true);
+    }
+  }, []);
+
+  const animateLayout = () => {
+    LayoutAnimation.configureNext({
+      duration: 280,
+      create: {
+        type: LayoutAnimation.Types.easeInEaseOut,
+        property: LayoutAnimation.Properties.opacity,
+      },
+      update: {
+        type: LayoutAnimation.Types.easeInEaseOut,
+      },
+      delete: {
+        type: LayoutAnimation.Types.easeInEaseOut,
+        property: LayoutAnimation.Properties.opacity,
+      },
+    });
+  };
 
   const handleGalleryPick = async () => {
     setStatus("");
@@ -287,8 +367,30 @@ export default function AuthChoiceScreen({ navigation, route }) {
     closeLanguageMenu();
   };
 
-  const languageOptions = ["en", "hi", "pa", "mr", "ur", "ta"];
+  const switchPatientMethod = (method) => {
+    animateLayout();
+    setPatientMethod(method);
+    setStatus("");
+  };
 
+  const switchAbhaMode = (mode) => {
+    animateLayout();
+    setAbhaMode(mode);
+    setStatus("");
+  };
+
+  const switchDoctorMethod = (method) => {
+    animateLayout();
+    setDoctorMethod(method);
+    setStatus("");
+  };
+
+  const toggleInfoCard = (cardKey) => {
+    animateLayout();
+    setExpandedInfoCard((current) => (current === cardKey ? null : cardKey));
+  };
+
+  const languageOptions = ["en", "hi", "pa", "mr", "ur", "ta"];
   const currentLanguageLabel = t(`common.lang_${i18n.language}`, i18n.language);
 
   const renderLanguagePicker = () => (
@@ -304,7 +406,7 @@ export default function AuthChoiceScreen({ navigation, route }) {
               {currentLanguageLabel}
             </Text>
             <Text style={styles.languageChevron}>
-              {languageMenuOpen ? "▴" : "▾"}
+              {languageMenuOpen ? "^" : "v"}
             </Text>
           </Pressable>
           {languageMenuOpen && (
@@ -365,165 +467,159 @@ export default function AuthChoiceScreen({ navigation, route }) {
             <Text style={styles.title}>{t("auth.doctor_login_title")}</Text>
             <Text style={styles.subtitle}>{t("auth.choose_signin")}</Text>
 
-          <View style={styles.tabRow}>
-            <Pressable
-              style={[
-                styles.tabButton,
-                doctorMethod === "username" && styles.tabActive,
-              ]}
-              onPress={() => {
-                setDoctorMethod("username");
-                setStatus("");
-              }}
-            >
-              <Text
-                style={[
-                  styles.tabText,
-                  doctorMethod === "username" && styles.tabTextActive,
-                ]}
-              >
-                {t("auth.username_login_title")}
-              </Text>
-            </Pressable>
-            <Pressable
-              style={[
-                styles.tabButton,
-                doctorMethod === "mobile" && styles.tabActive,
-              ]}
-              onPress={() => {
-                setDoctorMethod("mobile");
-                setStatus("");
-              }}
-            >
-              <Text
-                style={[
-                  styles.tabText,
-                  doctorMethod === "mobile" && styles.tabTextActive,
-                ]}
-              >
-                {t("auth.login_with_mobile")}
-              </Text>
-            </Pressable>
-          </View>
-
-          {doctorMethod === "username" ? (
-            <View style={styles.sectionCard}>
-              <Text style={styles.sectionTitle}>
-                {t("auth.username_login_title")}
-              </Text>
-              <Text style={styles.sectionSubtitle}>
-                {t("auth.username_login_subtitle")}
-              </Text>
-
-              <View style={styles.field}>
-                <Text style={styles.label}>{t("auth.username_label")}</Text>
-                <TextInput
-                  style={styles.input}
-                  onChangeText={setDoctorUsername}
-                  placeholder={t("auth.username_placeholder")}
-                  placeholderTextColor="#9CA3AF"
-                  autoCapitalize="none"
-                />
-              </View>
-              <View style={styles.field}>
-                <Text style={styles.label}>{t("auth.password_label")}</Text>
-                <TextInput
-                  style={styles.input}
-                  onChangeText={setDoctorPassword}
-                  placeholder={t("auth.password_placeholder")}
-                  placeholderTextColor="#9CA3AF"
-                  secureTextEntry
-                />
-              </View>
-
+            <View style={styles.tabRow}>
               <Pressable
                 style={[
-                  styles.primaryButton,
-                  doctorLoginLoading && styles.buttonDisabled,
+                  styles.tabButton,
+                  doctorMethod === "username" && styles.tabActive,
                 ]}
-                onPress={handleDoctorLogin}
-                disabled={doctorLoginLoading}
+                onPress={() => switchDoctorMethod("username")}
               >
-                <Text style={styles.primaryButtonText}>
-                  {doctorLoginLoading
-                    ? t("auth.signing_in")
-                    : t("auth.login")}
+                <Text
+                  style={[
+                    styles.tabText,
+                    doctorMethod === "username" && styles.tabTextActive,
+                  ]}
+                >
+                  {t("auth.username_login_title")}
+                </Text>
+              </Pressable>
+              <Pressable
+                style={[
+                  styles.tabButton,
+                  doctorMethod === "mobile" && styles.tabActive,
+                ]}
+                onPress={() => switchDoctorMethod("mobile")}
+              >
+                <Text
+                  style={[
+                    styles.tabText,
+                    doctorMethod === "mobile" && styles.tabTextActive,
+                  ]}
+                >
+                  {t("auth.login_with_mobile")}
                 </Text>
               </Pressable>
             </View>
-          ) : (
-            <View style={styles.sectionCard}>
-              <Text style={styles.sectionTitle}>{t("auth.mobile_otp_title")}</Text>
-              <Text style={styles.sectionSubtitle}>
-                {t("auth.mobile_otp_subtitle")}
-              </Text>
 
-              <View style={styles.field}>
-                <Text style={styles.label}>{t("auth.mobile_number_label")}</Text>
-                <TextInput
-                  style={styles.input}
-                  value={doctorPhoneNumber}
-                  onChangeText={(value) => {
-                    setDoctorPhoneNumber(value.replace(/[^0-9]/g, ""));
-                    setDoctorOtpSent(false);
-                    setDoctorOtp("");
-                  }}
-                  placeholder={t("auth.mobile_placeholder")}
-                  placeholderTextColor="#9CA3AF"
-                  keyboardType="number-pad"
-                  maxLength={10}
-                />
-              </View>
+            {doctorMethod === "username" ? (
+              <View style={styles.sectionCard}>
+                <Text style={styles.sectionTitle}>
+                  {t("auth.username_login_title")}
+                </Text>
+                <Text style={styles.sectionSubtitle}>
+                  {t("auth.username_login_subtitle")}
+                </Text>
 
-              {!doctorOtpSent ? (
+                <View style={styles.field}>
+                  <Text style={styles.label}>{t("auth.username_label")}</Text>
+                  <TextInput
+                    style={styles.input}
+                    onChangeText={setDoctorUsername}
+                    placeholder={t("auth.username_placeholder")}
+                    placeholderTextColor="#9CA3AF"
+                    autoCapitalize="none"
+                  />
+                </View>
+                <View style={styles.field}>
+                  <Text style={styles.label}>{t("auth.password_label")}</Text>
+                  <TextInput
+                    style={styles.input}
+                    onChangeText={setDoctorPassword}
+                    placeholder={t("auth.password_placeholder")}
+                    placeholderTextColor="#9CA3AF"
+                    secureTextEntry
+                  />
+                </View>
+
                 <Pressable
                   style={[
                     styles.primaryButton,
-                    doctorOtpSending && styles.buttonDisabled,
+                    doctorLoginLoading && styles.buttonDisabled,
                   ]}
-                  onPress={handleDoctorSendOtp}
-                  disabled={doctorOtpSending}
+                  onPress={handleDoctorLogin}
+                  disabled={doctorLoginLoading}
                 >
                   <Text style={styles.primaryButtonText}>
-                    {doctorOtpSending ? t("auth.sending") : t("auth.send_otp")}
+                    {doctorLoginLoading
+                      ? t("auth.signing_in")
+                      : t("auth.login")}
                   </Text>
                 </Pressable>
-              ) : (
-                <>
-                  <View style={styles.field}>
-                    <Text style={styles.label}>{t("auth.enter_otp_label")}</Text>
-                    <TextInput
-                      style={styles.input}
-                      value={doctorOtp}
-                      onChangeText={(value) =>
-                        setDoctorOtp(value.replace(/[^0-9]/g, ""))
-                      }
-                      placeholder={t("auth.otp_placeholder")}
-                      placeholderTextColor="#9CA3AF"
-                      keyboardType="number-pad"
-                      maxLength={6}
-                    />
-                  </View>
+              </View>
+            ) : (
+              <View style={styles.sectionCard}>
+                <Text style={styles.sectionTitle}>{t("auth.mobile_otp_title")}</Text>
+                <Text style={styles.sectionSubtitle}>
+                  {t("auth.mobile_otp_subtitle")}
+                </Text>
+
+                <View style={styles.field}>
+                  <Text style={styles.label}>{t("auth.mobile_number_label")}</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={doctorPhoneNumber}
+                    onChangeText={(value) => {
+                      setDoctorPhoneNumber(value.replace(/[^0-9]/g, ""));
+                      setDoctorOtpSent(false);
+                      setDoctorOtp("");
+                    }}
+                    placeholder={t("auth.mobile_placeholder")}
+                    placeholderTextColor="#9CA3AF"
+                    keyboardType="number-pad"
+                    maxLength={10}
+                  />
+                </View>
+
+                {!doctorOtpSent ? (
                   <Pressable
                     style={[
                       styles.primaryButton,
-                      doctorOtpVerifying && styles.buttonDisabled,
+                      doctorOtpSending && styles.buttonDisabled,
                     ]}
-                    onPress={handleDoctorVerifyOtp}
-                    disabled={doctorOtpVerifying}
+                    onPress={handleDoctorSendOtp}
+                    disabled={doctorOtpSending}
                   >
                     <Text style={styles.primaryButtonText}>
-                      {doctorOtpVerifying
-                        ? t("auth.verifying")
-                        : t("auth.verify_otp")}
+                      {doctorOtpSending ? t("auth.sending") : t("auth.send_otp")}
                     </Text>
                   </Pressable>
-                </>
-              )}
-            </View>
-          )}
+                ) : (
+                  <>
+                    <View style={styles.field}>
+                      <Text style={styles.label}>{t("auth.enter_otp_label")}</Text>
+                      <TextInput
+                        style={styles.input}
+                        value={doctorOtp}
+                        onChangeText={(value) =>
+                          setDoctorOtp(value.replace(/[^0-9]/g, ""))
+                        }
+                        placeholder={t("auth.otp_placeholder")}
+                        placeholderTextColor="#9CA3AF"
+                        keyboardType="number-pad"
+                        maxLength={6}
+                      />
+                    </View>
+                    <Pressable
+                      style={[
+                        styles.primaryButton,
+                        doctorOtpVerifying && styles.buttonDisabled,
+                      ]}
+                      onPress={handleDoctorVerifyOtp}
+                      disabled={doctorOtpVerifying}
+                    >
+                      <Text style={styles.primaryButtonText}>
+                        {doctorOtpVerifying
+                          ? t("auth.verifying")
+                          : t("auth.verify_otp")}
+                      </Text>
+                    </Pressable>
+                  </>
+                )}
+              </View>
+            )}
 
-          {status ? <Text style={styles.statusText}>{status}</Text> : null}
+            {status ? <Text style={styles.statusText}>{status}</Text> : null}
 
             <View style={styles.footerRow}>
               <Text style={styles.footerText}>{t("auth.new_doctor")}</Text>
@@ -599,222 +695,352 @@ export default function AuthChoiceScreen({ navigation, route }) {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.screen}>
+      <View style={styles.patientScreen}>
         {renderLanguagePicker()}
-        <ScrollView
-          contentContainerStyle={styles.container}
-          keyboardShouldPersistTaps="handled"
-        >
-        <Text style={styles.title}>{t("auth.patient_login_title")}</Text>
-        <Text style={styles.subtitle}>{t("auth.choose_verify")}</Text>
 
-        <View style={styles.tabRow}>
-          <Pressable
-            style={[styles.tabButton, patientMethod === "abha" && styles.tabActive]}
-            onPress={() => {
-              setPatientMethod("abha");
-              setStatus("");
-            }}
-          >
-            <Text
-              style={[
-                styles.tabText,
-                patientMethod === "abha" && styles.tabTextActive,
-              ]}
-            >
-              {t("auth.login_with_abha")}
-            </Text>
-          </Pressable>
-          <Pressable
-            style={[styles.tabButton, patientMethod === "mobile" && styles.tabActive]}
-            onPress={() => {
-              setPatientMethod("mobile");
-              setStatus("");
-            }}
-          >
-            <Text
-              style={[
-                styles.tabText,
-                patientMethod === "mobile" && styles.tabTextActive,
-              ]}
-            >
-              {t("auth.login_with_mobile")}
-            </Text>
-          </Pressable>
-        </View>
-
-        {patientMethod === "abha" ? (
-          <View style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>{t("auth.abha_verification")}</Text>
-            <Text style={styles.sectionSubtitle}>
-              {t("auth.abha_subtitle")}
-            </Text>
-
-            <View style={styles.subTabRow}>
+        <View style={styles.patientContainer}>
+          <MotionReveal delay={40}>
+            <View style={styles.patientInfoStack}>
               <Pressable
-                style={[
-                  styles.subTabButton,
-                  abhaMode === "id" && styles.subTabActive,
-                ]}
-                onPress={() => {
-                  setAbhaMode("id");
-                  setStatus("");
-                }}
+                style={styles.infoAccordion}
+                onPress={() => toggleInfoCard("safety")}
               >
-                <Text
-                  style={[
-                    styles.subTabText,
-                    abhaMode === "id" && styles.subTabTextActive,
-                  ]}
-                >
-                  {t("auth.enter_abha_id")}
-                </Text>
-              </Pressable>
-              <Pressable
-                style={[
-                  styles.subTabButton,
-                  abhaMode === "upload" && styles.subTabActive,
-                ]}
-                onPress={() => {
-                  setAbhaMode("upload");
-                  setStatus("");
-                }}
-              >
-                <Text
-                  style={[
-                    styles.subTabText,
-                    abhaMode === "upload" && styles.subTabTextActive,
-                  ]}
-                >
-                  {t("auth.upload_abha_card")}
-                </Text>
-              </Pressable>
-            </View>
-
-            {abhaMode === "id" ? (
-              <View style={styles.field}>
-                <Text style={styles.label}>{t("auth.abha_id_label")}</Text>
-                <TextInput
-                  style={styles.input}
-                  value={abhaId}
-                  onChangeText={setAbhaId}
-                  placeholder={t("auth.abha_id_placeholder")}
-                  placeholderTextColor="#9CA3AF"
-                  autoCapitalize="none"
-                />
-              </View>
-            ) : (
-              <View style={styles.uploadBlock}>
-                <View style={styles.uploadRow}>
-                  <Pressable
-                    style={styles.uploadButton}
-                    onPress={handleGalleryPick}
-                  >
-                    <Text style={styles.uploadButtonText}>
-                      {t("auth.upload_gallery")}
-                    </Text>
-                  </Pressable>
-                  <Pressable
-                    style={[styles.uploadButton, styles.uploadButtonSecondary]}
-                    onPress={handleCameraPick}
-                  >
-                    <Text style={styles.uploadButtonText}>
-                      {t("auth.take_photo")}
-                    </Text>
-                  </Pressable>
-                </View>
-                {abhaImage?.uri ? (
-                  <View style={styles.preview}>
-                    <Image
-                      source={{ uri: abhaImage.uri }}
-                      style={styles.previewImage}
-                    />
-                    <Text style={styles.previewText}>ABHA card selected</Text>
+                <View style={styles.infoAccordionHeader}>
+                  <View style={styles.infoBadge}>
+                    <Text style={styles.infoBadgeText}>PS</Text>
                   </View>
-                ) : (
-                  <Text style={styles.helperText}>
-                    {t("auth.upload_hint")}
+                  <Text style={styles.infoAccordionTitle}>
+                    {patientExperienceCopy.heroEyebrow}
                   </Text>
-                )}
-              </View>
-            )}
-
-            <Pressable
-              style={[styles.primaryButton, abhaLoading && styles.buttonDisabled]}
-              onPress={handleAbhaLogin}
-              disabled={abhaLoading}
-            >
-              <Text style={styles.primaryButtonText}>
-                {abhaLoading ? t("auth.processing") : t("auth.continue")}
-              </Text>
-            </Pressable>
-          </View>
-        ) : (
-          <View style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>{t("auth.mobile_otp_title")}</Text>
-            <Text style={styles.sectionSubtitle}>
-              {t("auth.mobile_otp_subtitle")}
-            </Text>
-
-            <View style={styles.field}>
-              <Text style={styles.label}>{t("auth.mobile_number_label")}</Text>
-              <TextInput
-                style={styles.input}
-                value={phoneNumber}
-                onChangeText={(value) => {
-                  setPhoneNumber(value.replace(/[^0-9]/g, ""));
-                  setOtpSent(false);
-                  setOtp("");
-                }}
-                placeholder={t("auth.mobile_placeholder")}
-                placeholderTextColor="#9CA3AF"
-                keyboardType="number-pad"
-                maxLength={10}
-              />
-            </View>
-
-            {!otpSent ? (
-              <Pressable
-                style={[styles.primaryButton, otpSending && styles.buttonDisabled]}
-                onPress={handleSendOtp}
-                disabled={otpSending}
-              >
-                <Text style={styles.primaryButtonText}>
-                  {otpSending ? t("auth.sending") : t("auth.send_otp")}
-                </Text>
-              </Pressable>
-            ) : (
-              <>
-                <View style={styles.field}>
-                  <Text style={styles.label}>{t("auth.enter_otp_label")}</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={otp}
-                    onChangeText={(value) =>
-                      setOtp(value.replace(/[^0-9]/g, ""))
-                    }
-                    placeholder={t("auth.otp_placeholder")}
-                    placeholderTextColor="#9CA3AF"
-                    keyboardType="number-pad"
-                    maxLength={6}
-                  />
+                  <Text style={styles.infoAccordionIcon}>
+                    {expandedInfoCard === "safety" ? "-" : "+"}
+                  </Text>
                 </View>
+                {expandedInfoCard === "safety" ? (
+                  <View style={styles.infoAccordionBody}>
+                    <Text style={styles.infoBodyTitle}>
+                      {patientExperienceCopy.heroTitle}
+                    </Text>
+                    <Text style={styles.infoBodyText}>
+                      {patientExperienceCopy.heroSubtitle}
+                    </Text>
+                    <View style={styles.signalRow}>
+                      {patientExperienceCopy.signals.map((signal) => (
+                        <View key={signal} style={styles.signalPill}>
+                          <Text style={styles.signalPillText}>{signal}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                ) : null}
+              </Pressable>
+
+              <Pressable
+                style={styles.infoAccordion}
+                onPress={() => toggleInfoCard("trust")}
+              >
+                <View style={styles.infoAccordionHeader}>
+                  <View style={[styles.infoBadge, styles.infoBadgeSoft]}>
+                    <Text style={[styles.infoBadgeText, styles.infoBadgeTextSoft]}>
+                      AI
+                    </Text>
+                  </View>
+                  <Text style={styles.infoAccordionTitle}>
+                    {patientExperienceCopy.proofLabel}
+                  </Text>
+                  <Text style={styles.infoAccordionIcon}>
+                    {expandedInfoCard === "trust" ? "-" : "+"}
+                  </Text>
+                </View>
+                {expandedInfoCard === "trust" ? (
+                  <View style={styles.infoAccordionBody}>
+                    {patientExperienceCopy.proofPoints.map((point, index) => (
+                      <View key={point} style={styles.proofRow}>
+                        <View style={styles.proofIndex}>
+                          <Text style={styles.proofIndexText}>{index + 1}</Text>
+                        </View>
+                        <Text style={styles.proofText}>{point}</Text>
+                      </View>
+                    ))}
+                  </View>
+                ) : null}
+              </Pressable>
+            </View>
+          </MotionReveal>
+
+          <MotionReveal delay={110} style={styles.patientPanelMotion}>
+            <View style={styles.patientPanel}>
+              <Text style={styles.patientPanelLabel}>
+                {patientExperienceCopy.accessLabel}
+              </Text>
+              <Text style={styles.patientPanelTitle}>
+                {t("auth.patient_login_title")}
+              </Text>
+              <Text style={styles.patientPanelSubtitle}>
+                {patientExperienceCopy.accessSubtitle}
+              </Text>
+
+              <View style={styles.methodStack}>
                 <Pressable
-                  style={[styles.primaryButton, otpVerifying && styles.buttonDisabled]}
-                  onPress={handleVerifyOtp}
-                  disabled={otpVerifying}
+                  style={[
+                    styles.methodCard,
+                    patientMethod === "abha" && styles.methodCardActive,
+                  ]}
+                  onPress={() => switchPatientMethod("abha")}
                 >
-                  <Text style={styles.primaryButtonText}>
-                    {otpVerifying ? t("auth.verifying") : t("auth.verify_otp")}
+                  <View style={styles.methodHeaderRow}>
+                    <Text
+                      style={[
+                        styles.methodTitle,
+                        patientMethod === "abha" && styles.methodTitleActive,
+                      ]}
+                    >
+                      {t("auth.login_with_abha")}
+                    </Text>
+                    <View
+                      style={[
+                        styles.methodStateDot,
+                        patientMethod === "abha" && styles.methodStateDotActive,
+                      ]}
+                    />
+                  </View>
+                  <Text style={styles.methodDescription}>
+                    {patientExperienceCopy.methodAbha}
                   </Text>
                 </Pressable>
-              </>
-            )}
-          </View>
-        )}
 
-          {status ? <Text style={styles.statusText}>{status}</Text> : null}
-        </ScrollView>
+                <Pressable
+                  style={[
+                    styles.methodCard,
+                    patientMethod === "mobile" && styles.methodCardActive,
+                  ]}
+                  onPress={() => switchPatientMethod("mobile")}
+                >
+                  <View style={styles.methodHeaderRow}>
+                    <Text
+                      style={[
+                        styles.methodTitle,
+                        patientMethod === "mobile" && styles.methodTitleActive,
+                      ]}
+                    >
+                      {t("auth.login_with_mobile")}
+                    </Text>
+                    <View
+                      style={[
+                        styles.methodStateDot,
+                        patientMethod === "mobile" && styles.methodStateDotActive,
+                      ]}
+                    />
+                  </View>
+                  <Text style={styles.methodDescription}>
+                    {patientExperienceCopy.methodMobile}
+                  </Text>
+                </Pressable>
+              </View>
+
+              <MotionReveal
+                key={`${patientMethod}-${abhaMode}`}
+                delay={60}
+                style={styles.motionSection}
+              >
+                {patientMethod === "abha" ? (
+                  <View style={styles.formPanel}>
+                    <Text style={styles.formPanelTitle}>
+                      {t("auth.abha_verification")}
+                    </Text>
+                    <Text style={styles.formPanelSubtitle}>
+                      {patientExperienceCopy.abhaHint}
+                    </Text>
+
+                    <View style={styles.subTabRow}>
+                      <Pressable
+                        style={[
+                          styles.subTabButton,
+                          abhaMode === "id" && styles.subTabActive,
+                        ]}
+                        onPress={() => switchAbhaMode("id")}
+                      >
+                        <Text
+                          style={[
+                            styles.subTabText,
+                            abhaMode === "id" && styles.subTabTextActive,
+                          ]}
+                        >
+                          {t("auth.enter_abha_id")}
+                        </Text>
+                      </Pressable>
+                      <Pressable
+                        style={[
+                          styles.subTabButton,
+                          abhaMode === "upload" && styles.subTabActive,
+                        ]}
+                        onPress={() => switchAbhaMode("upload")}
+                      >
+                        <Text
+                          style={[
+                            styles.subTabText,
+                            abhaMode === "upload" && styles.subTabTextActive,
+                          ]}
+                        >
+                          {t("auth.upload_abha_card")}
+                        </Text>
+                      </Pressable>
+                    </View>
+
+                    {abhaMode === "id" ? (
+                      <View style={styles.field}>
+                        <Text style={styles.label}>{t("auth.abha_id_label")}</Text>
+                        <TextInput
+                          style={styles.patientInput}
+                          value={abhaId}
+                          onChangeText={setAbhaId}
+                          placeholder={t("auth.abha_id_placeholder")}
+                          placeholderTextColor="#8B97A3"
+                          autoCapitalize="none"
+                        />
+                      </View>
+                    ) : (
+                      <View style={styles.uploadBlock}>
+                        <View style={styles.uploadRow}>
+                          <Pressable
+                            style={styles.uploadButton}
+                            onPress={handleGalleryPick}
+                          >
+                            <Text style={styles.uploadButtonText}>
+                              {t("auth.upload_gallery")}
+                            </Text>
+                          </Pressable>
+                          <Pressable
+                            style={[
+                              styles.uploadButton,
+                              styles.uploadButtonSecondary,
+                            ]}
+                            onPress={handleCameraPick}
+                          >
+                            <Text style={styles.uploadButtonText}>
+                              {t("auth.take_photo")}
+                            </Text>
+                          </Pressable>
+                        </View>
+                        {abhaImage?.uri ? (
+                          <View style={styles.preview}>
+                            <Image
+                              source={{ uri: abhaImage.uri }}
+                              style={styles.previewImage}
+                            />
+                            <Text style={styles.previewText}>
+                              {patientExperienceCopy.uploadSelected}
+                            </Text>
+                          </View>
+                        ) : (
+                          <Text style={styles.helperText}>
+                            {t("auth.upload_hint")}
+                          </Text>
+                        )}
+                      </View>
+                    )}
+
+                    <Pressable
+                      style={[
+                        styles.patientPrimaryButton,
+                        abhaLoading && styles.buttonDisabled,
+                      ]}
+                      onPress={handleAbhaLogin}
+                      disabled={abhaLoading}
+                    >
+                      <Text style={styles.primaryButtonText}>
+                        {abhaLoading ? t("auth.processing") : t("auth.continue")}
+                      </Text>
+                    </Pressable>
+                  </View>
+                ) : (
+                  <View style={styles.formPanel}>
+                    <Text style={styles.formPanelTitle}>
+                      {t("auth.mobile_otp_title")}
+                    </Text>
+                    <Text style={styles.formPanelSubtitle}>
+                      {patientExperienceCopy.mobileHint}
+                    </Text>
+
+                    <View style={styles.field}>
+                      <Text style={styles.label}>
+                        {t("auth.mobile_number_label")}
+                      </Text>
+                      <TextInput
+                        style={styles.patientInput}
+                        value={phoneNumber}
+                        onChangeText={(value) => {
+                          setPhoneNumber(value.replace(/[^0-9]/g, ""));
+                          setOtpSent(false);
+                          setOtp("");
+                        }}
+                        placeholder={t("auth.mobile_placeholder")}
+                        placeholderTextColor="#8B97A3"
+                        keyboardType="number-pad"
+                        maxLength={10}
+                      />
+                    </View>
+
+                    {!otpSent ? (
+                      <Pressable
+                        style={[
+                          styles.patientPrimaryButton,
+                          otpSending && styles.buttonDisabled,
+                        ]}
+                        onPress={handleSendOtp}
+                        disabled={otpSending}
+                      >
+                        <Text style={styles.primaryButtonText}>
+                          {otpSending ? t("auth.sending") : t("auth.send_otp")}
+                        </Text>
+                      </Pressable>
+                    ) : (
+                      <>
+                        <View style={styles.field}>
+                          <Text style={styles.label}>
+                            {t("auth.enter_otp_label")}
+                          </Text>
+                          <TextInput
+                            style={styles.patientInput}
+                            value={otp}
+                            onChangeText={(value) =>
+                              setOtp(value.replace(/[^0-9]/g, ""))
+                            }
+                            placeholder={t("auth.otp_placeholder")}
+                            placeholderTextColor="#8B97A3"
+                            keyboardType="number-pad"
+                            maxLength={6}
+                          />
+                        </View>
+                        <Pressable
+                          style={[
+                            styles.patientPrimaryButton,
+                            otpVerifying && styles.buttonDisabled,
+                          ]}
+                          onPress={handleVerifyOtp}
+                          disabled={otpVerifying}
+                        >
+                          <Text style={styles.primaryButtonText}>
+                            {otpVerifying
+                              ? t("auth.verifying")
+                              : t("auth.verify_otp")}
+                          </Text>
+                        </Pressable>
+                      </>
+                    )}
+                  </View>
+                )}
+              </MotionReveal>
+
+              {status ? (
+                <View style={styles.statusCard}>
+                  <Text style={styles.patientStatusText}>{status}</Text>
+                </View>
+              ) : null}
+            </View>
+          </MotionReveal>
+        </View>
+
         {languageMenuOpen && (
           <Pressable
             style={styles.languageBackdrop}
@@ -835,12 +1061,24 @@ const styles = StyleSheet.create({
     flex: 1,
     position: "relative",
   },
+  patientScreen: {
+    flex: 1,
+    position: "relative",
+    backgroundColor: "#FFFFFF",
+  },
   container: {
     flexGrow: 1,
     flex: 1,
     paddingHorizontal: 24,
     paddingVertical: 32,
     justifyContent: "center",
+  },
+  patientContainer: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingTop: 76,
+    paddingBottom: 20,
+    justifyContent: "space-between",
   },
   title: {
     fontSize: 24,
@@ -850,6 +1088,228 @@ const styles = StyleSheet.create({
   subtitle: {
     marginTop: 6,
     fontSize: 15,
+    color: "#6B7280",
+  },
+  patientInfoStack: {
+    gap: 12,
+  },
+  infoAccordion: {
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.06,
+    shadowRadius: 16,
+    elevation: 3,
+  },
+  infoAccordionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  infoBadge: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: "#E7FAF8",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  infoBadgeSoft: {
+    backgroundColor: "#EFF6FF",
+  },
+  infoBadgeText: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: "#0F766E",
+  },
+  infoBadgeTextSoft: {
+    color: "#2563EB",
+  },
+  infoAccordionTitle: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#1F2937",
+  },
+  infoAccordionIcon: {
+    fontSize: 20,
+    fontWeight: "500",
+    color: "#64748B",
+    lineHeight: 22,
+  },
+  infoAccordionBody: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "#EEF2F7",
+  },
+  infoBodyTitle: {
+    fontSize: 17,
+    fontWeight: "700",
+    color: "#111827",
+    lineHeight: 24,
+  },
+  infoBodyText: {
+    marginTop: 8,
+    fontSize: 13.5,
+    lineHeight: 20,
+    color: "#6B7280",
+  },
+  signalRow: {
+    marginTop: 12,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  signalPill: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: "#E7FAF8",
+    borderWidth: 1,
+    borderColor: "#CFF3EF",
+  },
+  signalPillText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#0F766E",
+  },
+  proofRow: {
+    marginTop: 10,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+  },
+  proofIndex: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "#E7FAF8",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  proofIndexText: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: "#0F766E",
+  },
+  proofText: {
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 18,
+    color: "#6B7280",
+  },
+  patientPanelMotion: {
+    marginTop: 14,
+  },
+  patientPanel: {
+    borderRadius: 24,
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 18,
+    paddingTop: 18,
+    paddingBottom: 16,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.08,
+    shadowRadius: 18,
+    elevation: 4,
+  },
+  patientPanelLabel: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#0F766E",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  patientPanelTitle: {
+    marginTop: 8,
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#1F2937",
+  },
+  patientPanelSubtitle: {
+    marginTop: 6,
+    fontSize: 13.5,
+    lineHeight: 19,
+    color: "#6B7280",
+  },
+  methodStack: {
+    marginTop: 16,
+    gap: 10,
+  },
+  methodCard: {
+    borderRadius: 18,
+    paddingHorizontal: 14,
+    paddingVertical: 13,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    backgroundColor: "#FFFFFF",
+  },
+  methodCardActive: {
+    borderColor: "#5DC1B9",
+    backgroundColor: "#E7FAF8",
+    shadowColor: "#5DC1B9",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 2,
+  },
+  methodHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  methodTitle: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#24353B",
+  },
+  methodTitleActive: {
+    color: "#0F766E",
+  },
+  methodStateDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: "#D4DBDE",
+  },
+  methodStateDotActive: {
+    backgroundColor: "#5DC1B9",
+  },
+  methodDescription: {
+    marginTop: 6,
+    fontSize: 12.5,
+    lineHeight: 18,
+    color: "#6B7280",
+  },
+  motionSection: {
+    marginTop: 14,
+  },
+  formPanel: {
+    borderRadius: 20,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    padding: 15,
+  },
+  formPanelTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#1F2937",
+  },
+  formPanelSubtitle: {
+    marginTop: 6,
+    fontSize: 12.5,
+    lineHeight: 18,
     color: "#6B7280",
   },
   languageFloating: {
@@ -1003,11 +1463,12 @@ const styles = StyleSheet.create({
   },
   subTabButton: {
     flex: 1,
-    paddingVertical: 10,
+    paddingVertical: 9,
     borderRadius: 12,
     alignItems: "center",
     borderWidth: 1,
     borderColor: "#E2E8F0",
+    backgroundColor: "#FFFFFF",
   },
   subTabActive: {
     backgroundColor: "#E7FAF8",
@@ -1040,8 +1501,19 @@ const styles = StyleSheet.create({
     color: "#111827",
     backgroundColor: "#F9FAFB",
   },
+  patientInput: {
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: "#111827",
+    backgroundColor: "#F9FAFB",
+  },
   uploadBlock: {
-    marginTop: 14,
+    marginTop: 12,
   },
   uploadRow: {
     flexDirection: "row",
@@ -1072,7 +1544,7 @@ const styles = StyleSheet.create({
   },
   previewImage: {
     width: "100%",
-    height: 160,
+    height: 120,
     borderRadius: 12,
   },
   previewText: {
@@ -1084,6 +1556,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontSize: 12,
     color: "#94A3B8",
+    lineHeight: 16,
   },
   primaryButton: {
     marginTop: 18,
@@ -1092,6 +1565,18 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: "center",
   },
+  patientPrimaryButton: {
+    marginTop: 18,
+    backgroundColor: "#5DC1B9",
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: "center",
+    shadowColor: "#5DC1B9",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.18,
+    shadowRadius: 18,
+    elevation: 4,
+  },
   primaryButtonText: {
     color: "#FFFFFF",
     fontSize: 15,
@@ -1099,6 +1584,22 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: {
     opacity: 0.75,
+  },
+  statusCard: {
+    marginTop: 14,
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    backgroundColor: "#F0FDFA",
+    borderWidth: 1,
+    borderColor: "#CCFBF1",
+  },
+  patientStatusText: {
+    textAlign: "center",
+    color: "#0F766E",
+    fontSize: 12.5,
+    fontWeight: "600",
+    lineHeight: 18,
   },
   statusText: {
     marginTop: 16,
