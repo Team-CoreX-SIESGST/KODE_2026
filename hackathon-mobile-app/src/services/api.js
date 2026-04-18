@@ -150,8 +150,37 @@ export async function uploadAbhaCard({ uri, name, type }) {
 }
 export const patientUpdate = (token, payload) => Promise.resolve({ success: true, ...payload });
 
+function ensurePatientVisitIds(patient) {
+  if (!patient || !Array.isArray(patient._visits)) {
+    return patient;
+  }
+
+  const usedIds = new Set();
+  patient._visits = patient._visits.map((visit, index) => {
+    let visitId = visit?.visitId;
+
+    if (!visitId || usedIds.has(visitId)) {
+      const base = String(visit?.visitDate || `legacy_${index}`).replace(/[^a-zA-Z0-9]/g, "_");
+      visitId = `visit_${base}_${index}`;
+    }
+
+    while (usedIds.has(visitId)) {
+      visitId = `${visitId}_dup`;
+    }
+
+    usedIds.add(visitId);
+    return {
+      ...visit,
+      visitId,
+    };
+  });
+
+  return patient;
+}
+
 function getPatientByToken(token) {
-  return usersData.patientDetails.find((p) => p.abha_profile.healthIdNumber === token);
+  const patient = usersData.patientDetails.find((p) => p.abha_profile.healthIdNumber === token);
+  return ensurePatientVisitIds(patient);
 }
 
 function toNumber(value) {
@@ -337,7 +366,9 @@ export const patientUpdateRecord = async (token, reportId, updates) => {
   return { success: true, reportId, record: buildReportFromVisit(nextVisit), visit: nextVisit };
 };
 export const patientMe = async (token) => {
-  const patient = usersData.patientDetails.find(p => p.abha_profile.healthIdNumber === token);
+  const patient = ensurePatientVisitIds(
+    usersData.patientDetails.find(p => p.abha_profile.healthIdNumber === token)
+  );
   if (!patient) throw new Error("Patient not found");
   return {
     ...patient,

@@ -9,7 +9,7 @@ import SplashScreen from "../screens/SplashScreen";
 import RoleSelectionScreen from "../screens/RoleSelectionScreen";
 import AuthChoiceScreen from "../screens/AuthChoiceScreen";
 import AuthFormScreen from "../screens/AuthFormScreen";
-import PatientDashboardMock from "../screens/PatientDashboardMock";
+import PatientDashboardMock from "../screens/PatientDashboardMock.jsx";
 import ConsultantDashboardMock from "../screens/ConsultantDashboardMock";
 import DoctorProfilePage from "../screens/DoctorProfilePage";
 import PatientProfilePage from "../screens/PatientProfilePage";

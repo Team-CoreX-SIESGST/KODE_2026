@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { AuthContext } from "../context/AuthContext";
 import {
   doctorNearby,
@@ -69,22 +69,26 @@ export default function PatientDashboardMock() {
   const [ancDirty, setAncDirty] = useState(false);
   const pulse = useRef(new Animated.Value(0)).current;
 
+  async function loadProfile() {
+    if (!token) return;
+    try {
+      const data = await patientMe(token);
+      setProfile(data || null);
+      setAncDirty(false);
+    } catch (error) {
+      setProfile(null);
+    }
+  }
+
   useEffect(() => {
-    let isMounted = true;
-    const loadProfile = async () => {
-      if (!token) return;
-      try {
-        const data = await patientMe(token);
-        if (isMounted) setProfile(data || null);
-      } catch (error) {
-        if (isMounted) setProfile(null);
-      }
-    };
     loadProfile();
-    return () => {
-      isMounted = false;
-    };
   }, [token]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      loadProfile();
+    }, [token])
+  );
 
   const activeUser = profile || user;
 
