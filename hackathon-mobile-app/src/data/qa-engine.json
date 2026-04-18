@@ -1,213 +1,229 @@
 {
     "intents": [
         {
-            "tag": "symptom_checker",
+            "tag": "anc_schedule",
             "patterns": [
-                "mujhe bukhaar hai",
-                "pet dard ho raha hai",
-                "I have fever and headache",
-                "sir dard hai aur chakkar aa rahe hain",
-                "mere bachche ko khansi hai",
-                "body me dard hai",
-                "I feel very weak and tired",
-                "meri tabiyat theek nahi hai",
-                "throat pain and cold",
-                "ulti aa rahi hai"
+                "anc checkup kab karein",
+                "pregnancy check-up schedule kya hai",
+                "next visit kab hai",
+                "kitni baar hospital jaana hai pregnancy mein",
+                "monthly checkup kab hoga",
+                "ante-natal care kab karein",
+                "pehla ANC visit kab hona chahiye",
+                "7 mahine mein kitni baar doctor",
+                "9 mahine mein checkup schedule",
+                "pregnancy mein doctor kab milein"
             ],
             "responses": [
-                "Bukhaar (Fever): Agar 100°F se zyada hai, paracetamol lein aur paani zyada piyein. Agar 3 din mein theek nahi hota ya 103°F se zyada ho, turant doctor ke paas jayein.",
-                "Pet Dard (Stomach Pain): Thanda paani ya ORS piyein. Agar dard bahut tez ho, ulti ke saath khoon aaye ya 24 ghante se zyada rahe, Nabha Civil Hospital jayein.",
-                "Khansi (Cough): Garam paani mein namak daalkar gargle karein. Agar 2 hafte se zyada ho ya khoon aaye, TB test ke liye hospital se milein. Yeh test free hai.",
-                "Sir Dard (Headache): Aaram karein, paani piyein. Agar aankhon ke aage andhera aaye, haath-pair sune padein, ya achanak bahut tez dard ho — yeh emergency hai, seedha hospital jayein."
+                "ANC Checkup Schedule (MoHFW India):\n• Pehla visit: 12 hafte ke andar (pehli timahi mein)\n• Doosra visit: 14–26 hafte\n• Teesra visit: 28–34 hafte\n• Chautha visit: 36 hafte ke baad\n\nHAR MAHINE ANC FREE hai Nabha Civil Hospital aur PHC mein. PMSMA: har mahine 9 tarikh ko FREE antenatal check-up milta hai.",
+                "Pregnancy mein minimum 4 ANC visits zaruri hain:\n1. Pehle 3 mahine (Week 1–12)\n2. 3–6 mahine (Week 14–26)\n3. 6–8 mahine (Week 28–34)\n4. 8–10 mahine (Week 36+)\n\nHigh-risk hain to zyada baar milna hoga — ASHA worker ya ANM se puchein. Yeh sab FREE hain government hospital mein.",
+                "PMSMA scheme ke tahat: Har mahine 9 tarikh ko PRIMARY HEALTH CENTRE mein FREE antenatal check-up hota hai — blood test, BP, weight, ultrasound sab included. Apni ASHA worker se appointment lein.",
+                "Aapka agla checkup kab ka hai? Yeh depend karta hai weeks pregnant hain:\n• 1–28 weeks: Har 28 din (mahine mein ek baar)\n• 28–36 weeks: Har 14 din (15 din mein ek baar)\n• 36–40 weeks: Har 7 din (weekly)\n\nHigh-risk hain to doble baar milna hoga."
             ]
         },
         {
-            "tag": "hospital_status",
+            "tag": "risk_assessment",
             "patterns": [
-                "Nabha hospital mein doctor hai kya",
-                "kya aaj hospital khula hai",
-                "doctor available hai kya",
-                "hospital mein kitne doctor hain",
-                "civil hospital ki kya situation hai",
-                "doctor kab milega",
-                "OPD chal rahi hai kya",
-                "hospital ka time kya hai",
-                "kya doctor on duty hai",
-                "Nabha Civil Hospital staff"
+                "high risk pregnancy kya hota hai",
+                "meri pregnancy risky hai kya",
+                "risk band kya hai",
+                "CDSS kya hota hai",
+                "pregnancy normal hai kya",
+                "kya main safe hoon",
+                "doctor ne high risk bola",
+                "risk level kya hai mera",
+                "pregnancy complications ke signs",
+                "antenatal risk kaise pata chalega"
             ],
             "responses": [
-                "Nabha Civil Hospital mein abhi 11 doctors kaam kar rahe hain (23 mein se). Staff ki kami hai, isliye wait time zyada ho sakta hai. Subah 8 baje pahunchne ki koshish karein.",
-                "OPD timing: Subah 8:00 AM se 2:00 PM (Monday–Saturday). Emergency 24 ghante khuli rehti hai. Sunday ko sirf emergency services available hain.",
-                "Doctor availability update: General OPD, Maternity, aur Child Health services available hain. Specialist doctors limited hain — pehle junior doctor se milein jo aapko aage refer kar sakta hai.",
-                "Waiting time bachane ke liye: Apna Aadhar card aur pehle ke prescription saath laye aayein. Community Health Worker (ASHA Worker) se pehle milein — woh fast-track kar sakti hain."
+                "ArogyaGram CDSS (Clinical Decision Support System) 4 risk levels use karta hai:\n🟢 NORMAL — Routine ANC, mahine mein ek baar\n🟡 MEDIUM — Closer monitoring, 48 ghante mein doctor se milein\n🔴 HIGH — Aaj hi civil hospital jayein\n🚨 EMERGENCY — Abhi 108 call karein\n\nApni ANM ya ASHA worker se puchein ki aapka risk band kya hai.",
+                "High-risk pregnancy ke common karan:\n• Hemoglobin 7 se kam (severe anemia)\n• BP 140/90 se zyada (pre-eclampsia)\n• Urine mein protein zyada\n• Gestational diabetes (GDM)\n• Baby ki position seedhi nahi (breech)\n• Twins\n• Pehle C-section hua tha\n• Eclampsia ya seizures ka itihas\n\nAgar koi bhi sign hai, aaj hi doctor se milein.",
+                "Normal pregnancy mein:\n• BP 90/60 se 130/85 ke beech rehta hai\n• Hemoglobin 11 g/dL se zyada hona chahiye\n• Weight theek se badh raha ho\n• Baby ki movement sahi ho\n• Koi swelling na ho\n\nAgar kuch bhi alag lage — ASHA worker ko batayein turant."
             ]
         },
         {
-            "tag": "medicine_availability",
+            "tag": "emergency_obstetric",
             "patterns": [
-                "paracetamol milega kya",
-                "dawai available hai kya",
-                "kaunsi dawai hospital mein free milti hai",
-                "medicine stock mein hai kya",
-                "blood pressure ki dawai chahiye",
-                "diabetes ki medicine kahan milegi",
-                "ORS packet hai kya",
-                "antibiotic available hai",
-                "iron tablet milegi kya",
-                "medicine khatam ho gayi"
+                "bahut zyada khoon aa raha hai pregnancy mein",
+                "baby ki movement band ho gayi",
+                "seizures ho rahe hain pregnancy mein",
+                "tez sar dard aur aankhon ke aage andhera",
+                "ghar pe delivery ho rahi hai",
+                "baby janam ke baad roo nahi raha",
+                "labour pain shuru ho gayi",
+                "baby ki position seedhi nahi",
+                "prasooti emergency",
+                "neonatal emergency newborn baby"
             ],
             "responses": [
-                "Nabha Civil Hospital mein FREE milne wali dawaiyan: Paracetamol, ORS, Iron Tablets, Antacids, basic Antibiotics (Amoxicillin), aur BP medicines. Ye sab Jan Aushadhi Kendra se milti hain.",
-                "Agar hospital mein stock nahi hai: Nabha bus stand ke paas Jan Aushadhi Store mein 50–90% sasti generic medicines milti hain. Wahan apna prescription dikhayein.",
-                "Diabetes aur BP ki dawai: Ye hospital se monthly free milti hai — Ayushman Bharat card ya BPL card leke aayein. Pehli baar doctor se prescription banwayen.",
-                "Emergency mein dawai khatam ho gayi: Apne nearest ASHA worker ko call karein. Unke paas basic first-aid stock rehta hai. ORS ghar par bhi ban sakta hai: 1 litre paani + 6 chammach cheeni + आधा chammach namak."
+                "🚨 EMERGENCY — ABHI 108 CALL KAREIN (FREE, 24/7)\n\nYeh avstha mein seedha hospital jaana zaroori hai:\n• Heavy bleeding during pregnancy\n• Baby ki movement band (12+ ghante)\n• Seizures / behoshi\n• Tez sar dard + high BP + aankhon ke aage andhera (pre-eclampsia)\n\nGhar pe delivery hoti ho to 108 call karo, ASHA worker ko call karo, aur saaf kapda + garam paani taiyaar karo. Naal (umbilical cord) khud mat kaato.",
+                "Baby ke janam ke turant baad agar ROTA NAHI to:\n1. Uski pith thapthapao halke se\n2. Uske mooh aur naak saaf kapde se saaf karo\n3. 108 turant call karo\n4. Asha worker ke paas sona gold kit hoti hai — unhe bulaao\n\nYeh NEONATAL EMERGENCY hai — hospital mein 'Sick Newborn Care Unit (SNCU)' milegi FREE.",
+                "Pre-eclampsia ke liye 🔴 EMERGENCY signs:\n• BP 140/90 se zyada\n• Sar mein bahut tez dard\n• Aankhon ke aage andhera ya dhundhlapa\n• Haathon-paon mein bahut zyada sujan\n• Urine mein protein (urine test se pata chalta hai)\n\nYeh signs hain to ABHI 108 call karo. Rajindra Hospital Patiala refer ho sakta hai."
             ]
         },
         {
-            "tag": "offline_records",
+            "tag": "antenatal_supplements",
             "patterns": [
-                "mera health record kahan hai",
-                "purana prescription kaise dekhunga",
-                "internet nahi hai records kaise dekhein",
-                "digital health card kya hota hai",
-                "Ayushman card se records kaise nikaalein",
-                "bina internet ke health data",
-                "ABHA card kya hai",
-                "mera medical history kaise dekhun",
-                "health ID banana hai",
-                "apna record kaise save karein"
+                "iron tablet kyon leni chahiye pregnancy mein",
+                "IFA supplement kya hota hai",
+                "calcium tablet kab leni chahiye",
+                "folic acid ka kya role hai",
+                "TT injection kab lagaye",
+                "tetanus toxoid pregnancy mein",
+                "anemia se bachne ka tarika",
+                "vitamin D pregnancy mein",
+                "kha nahi sakti tablets",
+                "tablet se ulti aati hai"
             ],
             "responses": [
-                "ABHA (Ayushman Bharat Health Account) card banwayen — yeh aapka digital health ID card hai. Ek baar banane ke baad, aapke saare records usme save rehte hain, jo offline bhi dikha sakte hain.",
-                "Offline records access karne ke liye: Hospital ke help desk pe jaayein aur apna ABHA number ya Aadhar number dijiye. Woh aapke records print kar denge. Hamesha ek printed copy apne paas rakhen.",
-                "Agar ABHA card nahi hai: Hospital ke registration counter par free mein banwayen. Sirf Aadhar card chahiye. Isme aapke vaccinations, lab reports, aur prescriptions automatically save ho jaate hain.",
-                "Practical tip: Apne phone mein apni dawaiyon ki photo kheeench lein. Purane prescriptions ka photo lena bahut zaroori hai — bina internet ke bhi kaam aata hai emergency mein."
+                "Pregnancy mein zaruri FREE supplements (Nabha Civil Hospital / ASHA se milte hain):\n\n💊 IFA (Iron + Folic Acid): Roz ek tablet, pehle mahine se. Anemia se bachata hai — baby ke liye khoon zaruri hai.\n💊 Calcium (500mg): Din mein do baar, 4th mahine se. Haddiyan aur bachche ki growth ke liye.\n💉 TT (Tetanus Toxoid): 2 injections — pahli baar pregnancy mein. Tetanus se bachata hai.\n\nSab FREE hain — ASHA ya ANM se lein.",
+                "IFA tablet se ulti aati hai to:\n• Raat ko sone ke waqt lein\n• Khane ke baad lein\n• Nimbu paani ke baad lein\n\nPar band mat karein — anemia (khoon ki kami) mein Hb 7 se kam ho to EMERGENCY ban sakti hai. Apni ANM ko batayein.",
+                "Folic Acid (pehle 3 mahine) bahut zaroori hai:\n• Baby ke dimaag aur reeed ki haddi sahi bane\n• Neural tube defects se bachata hai\n• Pehle 12 hafte mein lena sabse important hai\n\nIron tablet se hemoglobin upar aata hai — delivery ke waqt khooon ki zaroorat hoti hai.\n\nYeh supplements anganwadi se bhi mil sakti hain.",
+                "TT (Tetanus Toxoid) schedule:\n• TT-1: Pregnancy mein pehla teeka jaldi lein\n• TT-2: TT-1 ke 4 hafte baad\n• Agar pehle 3 saal mein TT liya tha: sirf ek booster\n\nFREE hai Nabha Civil Hospital aur PHC mein."
             ]
         },
         {
-            "tag": "emergency",
+            "tag": "maternal_symptoms",
             "patterns": [
-                "bahut tez dard ho raha hai",
-                "behosh ho gaya",
-                "accident ho gaya",
-                "saanp ne kaata",
-                "bachcha saans nahi le raha",
-                "chest pain ho raha hai",
-                "bohot zyada khoon aa raha hai",
-                "stroke ke symptoms",
-                "baby born ho raha hai ghar pe",
-                "emergency ambulance chahiye"
+                "pregnancy mein pet mein dard ho raha hai",
+                "garbhawastha mein chakkar aa rahe hain",
+                "pregnancy mein ulti bahut ho rahi hai",
+                "pregnancy mein haath pair sujj gaye hain",
+                "baby ki hilchal kam ho gayi",
+                "pregnancy mein neend nahi aati",
+                "khaana nahi khaya ja raha pregnancy mein",
+                "garmi bahut lag rahi hai pregnancy mein",
+                "peshab mein jalan pregnancy mein",
+                "pregnancy mein sar dard ho raha hai"
             ],
             "responses": [
-                "🚨 TURANT CALL KAREIN: Ambulance — 108 (FREE, 24/7). Nabha Civil Hospital Emergency — 01765-220033. Yeh number bina internet ke bhi kaam karta hai.",
-                "Saanp katne par (Snakebite): Hilayein mat, katne wali jagah ko dil se neeche rakhen. Katne ki jagah ko baandhen NAHI. Seedha hospital jayein — antivenom sirf hospital mein milta hai. Time bahut zaroori hai.",
-                "Chest Pain / Stroke: Agar seene mein dard hai, haath mein sunn-pan hai, ya bolne mein takleef hai — yeh HEART ATTACK ya STROKE ho sakta hai. Lait jaayein, tight kapde dheele karein, aur 108 call karein. Aspirin dein agar available ho.",
-                "Ghar par delivery (Home Birth Emergency): 108 call karein turant. Saaf kapda aur garam paani taiyaar rakhen. Naal (umbilical cord) ko khud kaatne ki koshish NA karein. ASHA worker ko bhi call karein — unka number village mein pasted hoga."
+                "Pregnancy mein haath-paon ki sujan (swelling):\n🟡 Thodi sujan normal hai 3rd trimester mein.\n🔴 DANGER signs: Bahut tezi se sujan badhe, chehra suj jaye, ya sujan ke saath sar dard aur aankhon ke aage andhera — yeh PRE-ECLAMPSIA ho sakta hai.\n\nAbhi BP check karwayen — ASHA worker ya PHC mein FREE hota hai. Agar BP high hai to aaj hospital jayein.",
+                "Chakkar aana pregnancy mein:\n• Thoda chakkar — normal, uthte time dhheere uthein\n• Bahut zyada chakkar + kamazoori — hemoglobin check karein (anemia ho sakta hai)\n• Chakkar + tez sar dard + BP high — EMERGENCY, 108 call karein\n\nHemoglobin test FREE hai Nabha Civil Hospital mein.",
+                "Peshab mein jalan (UTI — Urinary Tract Infection):\n• Pregnancy mein UTI common hai\n• Zyada paani piyein (8-10 glass rooz)\n• Doctor se consult zaroor karein — pregnancy mein UTI dangerous ho sakti hai\n• Antibiotic doctor hi decide karenge — khud mat lein\n\nNabha Civil Hospital mein urine test FREE hai.",
+                "Ulti bahut ho rahi hai (Hyperemesis):\n• Pehle 3 mahine mein thodi ulti normal hai\n• Agar kuch bhi andar nahi reh raha 2 din se zyada — hospital jayein (drip chahiye ho sakti hai)\n• Thoda thoda paani piyein — ORS bhi de sakte hain\n• Ginger (adrak) wali chai help kar sakti hai\n\nDehydration se bacha jayein."
             ]
         },
         {
-            "tag": "maternal_health",
+            "tag": "newborn_care",
             "patterns": [
-                "pregnancy check-up kab karein",
-                "garbhwati mahila ko kya khaana chahiye",
-                "delivery ke liye kya karna hai",
-                "ante-natal care kya hota hai",
-                "prasav ke baad kya karna chahiye",
-                "baby ka teeka kab lagega",
-                "breastfeeding ke baare mein batao",
-                "iron folic acid tablet kyon leni chahiye",
-                "normal delivery ya cesarean",
-                "mahila doctor available hai kya"
+                "naya bachcha ghar aaya hai kya karein",
+                "breastfeeding kaise karein",
+                "naab ki dekhbhal kaise karein",
+                "newborn baby ko teeka kab lagega",
+                "baby ka paehla teeka kab hoga",
+                "baby ka wajan kam kyon hai",
+                "premature baby ki dekhbhal",
+                "baby ko pehle kya deein",
+                "colostrum kya hota hai",
+                "jaundice newborn baby mein"
             ],
             "responses": [
-                "Pregnancy check-ups: Minimum 4 ANC (Ante-Natal Care) visits zaruri hain — pehli 12 weeks mein, phir 20, 28, aur 36 weeks par. Sab Nabha Civil Hospital mein FREE hain. Apni ASHA worker se milein.",
-                "Zaruri supplements: Iron-Folic Acid (IFA) tablets roz leni chahiye — yeh anemia se bachati hain. Calcium tablets bhi milti hain. Dono FREE hain hospital se. Apne ASHA worker se lein.",
-                "Janani Suraksha Yojana (JSY): Hospital mein delivery karne par government ₹1400 deti hai. Aapki ASHA worker aapko pura process mein help karegi aur transport arrange kar sakti hai.",
-                "Baby ke teeke (Vaccination): Janm ke turant baad — BCG, OPV, Hepatitis B. 6 hafte mein — Pentavalent, OPV. Sab FREE hain. Apna 'Mother & Child Protection Card' hamesha saath rakhen."
+                "Nawajaate bachche ki dekhbhal (Newborn Care):\n\n🤱 Breastfeeding: Janam ke 1 ghante ke andar shuru karein. Pehla doodh (colostrum — peela gaadha doodh) ZAROOR pilayein — yeh immunity deta hai.\n\n🏠 Warmth: Bachche ko garam rakhen — kangaroo care (seene se lagayen) karo.\n\n🧴 Naab (Umbilical Cord): Saaf aur sukha rakhen — kuch bhi mat lagayen.\n\n💉 Teeke: Janam pe BCG + OPV-0 + Hep-B FREE milta hai hospital mein.",
+                "Newborn vaccination schedule (FREE at government hospital):\n• Janam pe: BCG, OPV-0, Hepatitis B\n• 6 hafte: Pentavalent, OPV, Rotavirus, fIPV\n• 10 hafte: Pentavalent, OPV, fIPV\n• 14 hafte: Pentavalent, OPV, Rotavirus\n• 9 mahine: Measles-Rubella (MR), Vitamin A\n• 16–24 mahine: Boosters\n\n'Mother & Child Protection Card' hamesha saath rakhen.",
+                "Baby ka rang peela ho raha hai (Jaundice in newborn):\n• Janam ke 2-3 din mein thoda peelapa normal hai\n• Agar aankhein, haath, pair bhi peele hain ya 1 hafte ke baad bhi hai — TURANT hospital jayein\n• Baby ko dhoop mein na rakhen — phototherapy (light treatment) hospital mein FREE milti hai JSSK scheme ke tahat",
+                "Colostrum (pehla doodh) kyon zaruri hai:\n• Peela, gaada, thoda sa — yeh LIQUID GOLD hai\n• Baby ki immunity banata hai\n• Digestion sahi karta hai\n• Jaamon ke 1 ghante mein pilana zaroori hai\n\nFormula ya ghee-shakar NAHI — sirf maa ka doodh."
             ]
         },
         {
-            "tag": "child_health",
+            "tag": "government_maternal_schemes",
             "patterns": [
-                "bachche ko bukhaar hai",
-                "baby kuch kha nahi raha",
-                "child ko diarrhea ho raha hai",
-                "bachche ka wajan kam hai",
-                "malnutrition ke baare mein batao",
-                "bache ki growth theek nahi hai",
-                "school mein bachche ko chakkar aate hain",
-                "bachche ko khujli ho rahi hai",
-                "5 saal se chote bachche ko kya dein",
-                "anganwadi se kya milta hai"
+                "Janani Suraksha Yojana kya hai",
+                "delivery ke liye paise milenge kya",
+                "JSSK scheme kya kya milta hai",
+                "PMSMA kab hota hai",
+                "free delivery government hospital mein",
+                "pregnancy mein kya kya free milega",
+                "Ayushman card pregnancy mein kaam aayega",
+                "hospital mein delivery free hai kya",
+                "maternity benefit scheme",
+                "pradhan mantri surakshit matritva"
             ],
             "responses": [
-                "Diarrhea in children: ORS solution pila-te raho — thodi thodi matra mein baar baar. Zinc tablets (10 days course) bhi dein — yeh FREE milti hai hospital ya anganwadi se. Agar 6 ghante mein sudhaar nahi, hospital jayein.",
-                "Malnutrition (Kuposhan): Agar bachche ka wajan uski umar ke hisaab se bahut kam hai, turant anganwadi worker se milein. 'Poshan Abhiyan' ke tahat FREE supplementary food milta hai. SAM (Severe Acute Malnutrition) ke liye NRC (Nutrition Rehabilitation Centre) available hai.",
-                "Fever in children under 5: 100°F se zyada pe Paracetamol syrup dein (weight ke hisaab se). Thande paani ki patti maathen pe rakhen. Agar seizure aaye ya bachcha bahut zyada sust ho — yeh emergency hai, 108 call karein.",
-                "Anganwadi services (FREE): Daily nutritious meal, growth monitoring, vaccination support, pre-school education, aur health check-ups. Har village mein anganwadi center hai — apni local worker se milein."
+                "Pregnancy mein FREE government schemes:\n\n👶 JSY (Janani Suraksha Yojana): Hospital mein delivery karne par ₹1,400 milte hain (BPL/SC/ST mahilaon ko). ASHA worker pura process mein help karti hai.\n\n🏥 JSSK: Government hospital mein delivery ke liye sab kuch FREE — medicines, tests, transport, food, khoon, C-section bhi FREE.\n\n📅 PMSMA: Har mahine 9 tarikh ko FREE antenatal check-up — BP, blood, urine, ultrasound sab.\n\nApni ASHA worker se milein — woh sab manage karengi.",
+                "JSSK (Janani Shishu Suraksha Karyakram) mein kya-kya FREE milta hai:\n✅ Normal delivery\n✅ C-section (cesarean)\n✅ Saari medicines\n✅ Blood transfusion\n✅ Lab tests\n✅ Ultrasound\n✅ Diet (3 din)\n✅ Transport to hospital aur wapas ghar\n✅ Baby ki 30 din tak FREE treatment\n\nKoi bhi sarkari aspatal mein milta hai — Nabha Civil Hospital included.",
+                "Ayushman Bharat PM-JAY:\n• BPL families ke liye ₹5 lakh tak FREE cashless treatment\n• C-section, complications, ICU sab cover hota hai\n• Nabha Civil Hospital paneled hai\n• Ayushman card banwayen — sirf Aadhar + Ration card chahiye\n• Panchayat office ya CSC centre pe apply karein — FREE",
+                "PMSMA (Pradhan Mantri Surakshit Matritva Abhiyan):\n• Har mahine 9 tarikh ko SPECIAL ANC day\n• Specialist doctor milte hain — FREE\n• FREE: BP, HB test, blood sugar, urine protein, ultrasound\n• High-risk hain to identify kiya jaata hai\n• Nadi Civil Hospital aur PHC-CHC sab mein hota hai\n\nYeh ek baar zaroor attend karein pregnancy mein."
             ]
         },
         {
-            "tag": "mental_health",
+            "tag": "abha_health_records",
             "patterns": [
-                "bahut stress hai kaam ka",
-                "neend nahi aati",
-                "bahut udaas rehta hun",
-                "kisan ko tension ho rahi hai",
-                "mental health support chahiye",
-                "anxiety feel ho rahi hai",
-                "pareshan rehta hun",
-                "kisi se baat nahi karna chahta",
-                "depression kya hota hai",
-                "psychological help kahan milegi"
+                "ABHA card kya hota hai",
+                "health ID banana chahta hoon",
+                "mera health record kahan milega",
+                "digital health card pregnancy ke liye",
+                "pichle visits ki jankari kaise dekhun",
+                "ANC visit history kaise dekhein",
+                "medical records without internet",
+                "bina internet apna data kaise dekhein",
+                "Ayushman Bharat health ID",
+                "health account banana hai"
             ],
             "responses": [
-                "Aap akele nahi hain. Stress, anxiety, aur depression — yeh aam bimariyan hain jinka ilaaj possible hai. Inahe chhupaane ki zaroorat nahi. Nabha Civil Hospital mein free counseling available hai.",
-                "Vandrevala Foundation Helpline: 1860-2662-345 (24/7, FREE, Hindi mein). iCall: 9152987821. Yeh offline area mein bhi kaam karta hai — sirf basic phone signal chahiye.",
-                "Kisan helplines: PM-Kisan helpline 155261 par financial stress aur crop support ke liye call kar sakte hain. Aksar financial tension mental health ka main cause hota hai — dono saath solve honge.",
-                "Daily tips for stress: Roz 20 minute walk karein. Kisi dost ya pariwar se baat karein. Neend poori lein. Yeh simple steps bohot fark dalte hain. Agar 2 hafte se zyada problem ho, doctor se zaroor milein."
+                "ABHA (Ayushman Bharat Health Account) — Aapka Digital Health ID:\n• Ek baar banao — saari life ka health record store hoga\n• Aapke ANC visits, blood tests, prescriptions automatically save\n• Hospital counter pe ABHA number dijiye — pura record milega\n• Offline bhi kaam karta hai — bar code print karwayen\n\nFREE mein banwayen: Sirf Aadhar chahiye — Nabha Civil Hospital registration counter ya ASHA worker se.",
+                "ArogyaGram app mein aapka health record safe hai:\n• Saare ANC visits ka data\n• Blood pressure, Hemoglobin, weight history\n• Risk assessment report\n• Agle checkup ki date\n\nInternet nahi hai to ASHA worker ke paas printed copy maangein ya hospital ke help desk pe ABHA number dijiye.",
+                "Agar pehle ka prescription ya report chahiye:\n• ABHA card number se hospital counter se print mil sakta hai\n• Pehle se li hui reports ki phone se photo kheenchen — emergency mein kaam aati hai\n• Nabha Civil Hospital mein records 3 saal tak digital rakhte hain"
             ]
         },
         {
-            "tag": "government_schemes",
+            "tag": "asha_anm_support",
             "patterns": [
-                "Ayushman Bharat kya hai",
-                "free treatment kaise milega",
-                "BPL card se kya milta hai",
-                "health insurance rural area",
-                "PM Jan Arogya Yojana",
-                "free medicine scheme",
-                "government hospital free hai kya",
-                "kya mujhe free ilaaj milega",
-                "Mukhyamantri health scheme Punjab",
-                "ration card se hospital"
+                "ASHA worker se kaise milein",
+                "ANM nurse kya karti hai",
+                "health worker ka number chahiye",
+                "ASHA worker kya kaam karti hai",
+                "village health worker",
+                "home visit kab aayengi ASHA",
+                "community health worker",
+                "PHC mein kaunse doctor hain",
+                "anganwadi aur ASHA mein kya farak hai",
+                "ANC mein ASHA ka kya role hai"
             ],
             "responses": [
-                "Ayushman Bharat - PM-JAY: BPL families ko ₹5 lakh tak FREE treatment milti hai per year. Nabha Civil Hospital empanelled hai. Apna Ayushman card banwayen — sirf Aadhar aur ration card chahiye.",
-                "Punjab Sarkar ki Mukhyamantri Sehat Bima Yojana: ₹5 lakh ki cashless coverage sabhi registered families ke liye. Panchayat office ya Common Service Centre (CSC) mein enroll karein.",
-                "Nabha Civil Hospital mein PEHLE SE FREE: OPD consultation, basic medicines, maternity services, child vaccination, TB/Malaria treatment, aur X-ray/basic lab tests. Koi bhi payment ki zaroorat nahi in services ke liye.",
-                "Scheme ke liye apply karne ki jagah: Apne village ka CSC (Common Service Centre), Panchayat office, ya ASHA worker se milein. Documents: Aadhar card, ration card, BPL certificate (agar applicable)."
+                "ASHA Worker (Accredited Social Health Activist):\n• Har village mein ek ASHA worker hoti hai\n• Pregnancy mein FREE home visits karti hain\n• IFA, Calcium, TT vaccinations dilwati hain\n• Hospital delivery ke time saath jaati hain (JSY)\n• Emergency mein 108 call karwati hain aur transport arrange karti hain\n\nASHA worker ka number gram panchayat board ya anganwadi centre pe milta hai.",
+                "ANM (Auxiliary Nurse Midwife) kya karti hai:\n• PHC / Sub-centre pe kaam karti hain\n• ANC checkup karti hain — BP, weight, hemoglobin check\n• Injections aur vaccinations deti hain\n• Risky pregnancies identify karti hain\n• CDSS (ArogyaGram) mein data enter karti hain\n\nASHA aur ANM milkar kaam karti hain — in dono se contact mein rahein.",
+                "Anganwadi Centre kya deta hai (FREE):\n• Supplementary nutrition (pregnant aur lactating mothers ke liye)\n• Growth monitoring (bachche ka wajan)\n• Pre-school education\n• Referral services\n• IFA, Calcium tablets bhi milti hain yahan\n\nAnganwadi aur ASHA milkar 'convergence' karte hain — dono se milein."
             ]
         },
         {
-            "tag": "water_sanitation_health",
+            "tag": "maternal_nutrition",
             "patterns": [
-                "paani peene se bimari ho rahi hai",
-                "contaminated water symptoms",
-                "cholera ya typhoid ke symptoms",
-                "swacch paani kahan milega",
-                "khule mein shaucha ke nuksaan",
-                "ODF village kya hota hai",
-                "paani saaf karne ka tarika",
-                "gutter ka paani",
-                "hand washing importance",
-                "village mein bimari phail rahi hai"
+                "pregnancy mein kya khaana chahiye",
+                "garbhawastha mein diet kya ho",
+                "hemoglobin badhane ke liye kya khayein",
+                "pregnancy mein protein wala khaana",
+                "anemia ke liye kya khayein",
+                "baby ke liye kya khaana chahiye maa ko",
+                "pregnancy mein zyada neend aati hai bhook nahi lagti",
+                "kya kha sakte hain aur kya nahi",
+                "desi khana pregnancy mein",
+                "gharelu nuskhe pregnancy mein"
             ],
             "responses": [
-                "Paani saaf karne ka tarika (no electricity needed): 1 litre paani mein 2 drops bleach (chlorine) daalein aur 30 minute rakhein. Ya paani ko ubaalein (5 minute). Ya ORS/alum (fitkari) daalein — yeh impurities neeche bitha deta hai.",
-                "Contaminated water ke symptoms: Ulti, dast, pet dard, bukhaar — yeh Cholera, Typhoid, ya Hepatitis A ke signs ho sakte hain. ORS piyein aur TURANT hospital jayein. Yeh bimariyan tezi se phailti hain.",
-                "Haath dhoye ka sahi tarika: Khaana khaane se pehle, shaucha ke baad, aur bachche ko khaana dene se pehle — HAMESHA sabun se 20 second haath dhoyen. Yeh 80% infections rokta hai.",
-                "Village mein bimari fail rahi ho to: Turant gram panchayat ya ASHA worker ko batayein. Village-level disease outbreak PHC (Primary Health Centre) ko report hoti hai. Yeh Swachh Bharat Mission ka hissa hai — free sanitation support milta hai."
+                "Pregnancy mein zaruri khaana (affordable & local):\n\n🌿 Hara saag: Palak, methi, sarson — iron aur folate ke liye\n🫘 Daalein: Masoor, moong, chana — protein ke liye\n🥛 Doodh/Dahi: Calcium ke liye\n🥚 Ande: Complete protein\n🍋 Nimbu: Vitamin C — iron absorb karne mein help\n🌾 Sattu: Bahut saste mein bharpoor protein\n\nIFA tablet ke saath nimbu paani piyen — iron better absorb hoga.",
+                "Anemia (Khoon ki kami) ke liye:\n• Hemoglobin 11 se kam ho to anemia hai\n• Hb 7 se kam — SEVERE, hospital zaroor jayein\n• IFA tablet RAAT ko lein — ulti kam hogi\n• Palak, chana, kale chane, til roz khayein\n• Chai ya coffee IRON TABLET KE SAATH NAI PIYEN — iron absorb nahi hoga\n\nFREE iron tablets ASHA worker ya anganwadi se lein.",
+                "Pregnancy mein kya nahi khaana:\n❌ Kachha meat ya kachche ande\n❌ Papita (raw papaya)\n❌ Zyada tel wala ya masaledar khana (ulti badhta hai)\n❌ Alcohol & tobacco\n❌ Zyada namak (BP badhta hai)\n\nGharelu nuskhe: Adrak wali chai — morning sickness mein help. Saunf — digestion theek karta hai.",
+                "Baby ki growth ke liye maa ko daily chahiye:\n• 300 extra calories pregnancy mein\n• 60g protein (2 ande + 1 cup daal + doodh = enough)\n• 8-10 glass paani + ORS agar zyada paseena aata ho\n• Roz 20 minute halki walk (jab doctor ne mana na kiya ho)\n\nKhet mein kaam karne wali mahilayein zyada calorie chahiye — MUAC (mid-upper arm circumference) ANM zaroor check karein."
+            ]
+        },
+        {
+            "tag": "referral_transport_maternal",
+            "patterns": [
+                "ambulance kaise bulayein pregnancy mein",
+                "Rajindra Hospital Patiala kaise jaayein",
+                "referral kya hota hai",
+                "free transport pregnancy ke liye",
+                "hospital door hai delivery ke liye",
+                "emergency mein gaadi kahan se milegi",
+                "high risk pregnancy mein referral",
+                "PGI Chandigarh kaise jaayein",
+                "obstetric emergency transport",
+                "JSSK mein transport free hai kya"
+            ],
+            "responses": [
+                "🚑 FREE Ambulance: 108 (24/7, kisi bhi area se)\n• Delivery ya obstetric emergency ke liye sundar prefer karengi mahilayein\n• ASHA worker bhi transport arrange kar sakti hai JSY ke liye\n• Apni ASHA worker ka number hamesha phone mein save rakhen",
+                "Referral System (ArogyaGram CDSS):\n• Nabha Civil Hospital: Routine ANC aur normal deliveries\n• Rajindra Hospital Patiala (35 km): High-risk cases — cardiology, nephrology, neurology\n• PGI Chandigarh: EMERGENCY aur very complex cases\n\nReferral letter Nabha se milega — JSSK ke tahat government transport ya fuel reimburse hota hai.",
+                "JSSK mein FREE transport milta hai:\n• Ghar se hospital tak ambulance\n• Hospital se ghar wapas\n• Ek referral se doosre hospital tak\n• Agar ambulance nahi mili: transport cost reimburse hoti hai — receipts rakhein\n\nSocial welfare officer se hospital mein milein — woh process karengi."
             ]
         },
         {
@@ -219,226 +235,78 @@
                 "sat sri akal",
                 "help chahiye",
                 "kya tum meri madad kar sakte ho",
-                "chatbot se baat karni hai",
+                "MediSetu se baat karni hai",
                 "shuru karein",
                 "I need help",
-                "health information chahiye"
+                "health information chahiye",
+                "pregnancy mein kuch poochna hai",
+                "ANC ke baare mein batao"
             ],
             "responses": [
-                "Namaste! Main Nabha Civil Hospital ka health assistant hoon. Main aapko symptoms, doctor availability, medicines, aur government health schemes ke baare mein bataa sakta hoon.",
-                "Sat Sri Akal! Aap kisi bhi health sawal ke baare mein puch sakte hain — fever, dard, pregnancy, bachche ki health, ya hospital ki jankari. Main 173 villages ke logo ki madad ke liye hoon.",
-                "Hello! I'm your offline health assistant for the Nabha region. I can help with symptoms, medicine availability, hospital information, emergency guidance, and government health schemes. What do you need help with today?",
-                "Aap aise pooch sakte hain: 'Mujhe bukhaar hai kya karoon?', 'Hospital mein doctor hai kya?', ya 'Free medicine kahan milegi?' — Main aapki madad karoonga."
+                "Namaste! Main MediSetu AI hoon — ArogyaGram maternal health platform ka hissa.\n\nMain aapki madad kar sakta hoon:\n🤰 ANC checkup schedule\n💊 Pregnancy supplements (IFA, Calcium, TT)\n🚨 Emergency obstetric guidance\n👶 Newborn care\n🏛️ Government schemes (JSY, JSSK, PMSMA, PM-JAY)\n\nKya poochna hai aapko?",
+                "Sat Sri Akal! ArogyaGram Health Assistant mein aapka swagat hai.\n\nMain pregnancy, ANC visits, risk assessment, aur maternal health ke baare mein jawab de sakta hoon. ASHA worker ya ANM ke saath milkar kaam karta hoon.\n\nApna sawaal Hindi ya English mein poochein.",
+                "Hello! I'm MediSetu AI, the offline health assistant for the ArogyaGram CDSS platform. I specialise in:\n• Antenatal care (ANC) guidance\n• Maternal & neonatal health\n• Risk classification & emergency triage\n• Government maternal health schemes\n• Newborn care after delivery\n\nWhat can I help you with today?",
+                "Aap aise sawaal pooch sakte hain:\n• 'Meri pregnancy ka agla checkup kab hai?'\n• 'IFA tablet kab leni chahiye?'\n• 'Baby halchal band ho gayi — kya karein?'\n• 'FREE delivery ke liye kaunsi scheme hai?'\n• 'Ambulance kaise bulayein?'\n\nMein aapki madad karunga — 🤰 seedha poochein!"
             ]
         },
         {
-            "tag": "appointment_booking",
+            "tag": "emergency_contact",
             "patterns": [
-                "doctor se appointment leni hai",
-                "OPD mein number kaise milega",
-                "hospital mein time kaise lein",
-                "kab doctor se mil sakte hain",
-                "appointment kaise book karein",
-                "walk-in available hai kya",
-                "token system kya hai hospital ka",
-                "specialist se milna hai",
-                "eye doctor se milna hai",
-                "phone pe appointment ho sakti hai kya"
+                "ambulance number kya hai",
+                "108 number",
+                "emergency contact",
+                "hospital ka number kya hai",
+                "Nabha Civil Hospital phone number",
+                "turant madad chahiye",
+                "kahan jaayein emergency mein",
+                "national health helpline",
+                "104 helpline",
+                "doctor se abhi baat karni hai"
             ],
             "responses": [
-                "Nabha Civil Hospital OPD: Walk-in system hai — koi advance booking nahi chahiye. Subah 7:30 baje pahunch jaayein token lene ke liye. General OPD sab se pehle aata hai.",
-                "Token system: Registration counter se free token milta hai. Senior citizens aur pregnant women ko priority milti hai. ASHA worker ka letter laane par bhi fast-track ho sakta hai.",
-                "Specialist consultation: Eye (Ophthalmology), Skin (Dermatology), aur Orthopedic OPD specific days pe hoti hai. Counter pe ya ASHA worker se schedule poochein — woh updated rehti hain.",
-                "Phone se appointment: Abhi phone booking available nahi hai Nabha Civil mein. Lekin 104 helpline (FREE) pe call karke doctor se phone pe basic advice le sakte hain bina hospital aaye."
+                "🚨 EMERGENCY NUMBERS (Bina internet ke bhi kaam karte hain):\n\n📞 Ambulance: 108 (FREE, 24/7)\n📞 National Health Helpline: 104 (FREE, Doctor se phone pe baat)\n📞 Nabha Civil Hospital: 01765-220033\n📞 Rajindra Hospital Patiala: 0175-2212073\n\nYeh numbers hamesha apne phone mein save rakhen.",
+                "104 Helpline kya karta hai:\n• Trained nurse ya doctor se FREE phone pe baat\n• Hindi mein baat kar sakte hain\n• Symptoms batayein — guidance milegi\n• Hospital jaana zaroori hai ya nahi — yeh bhi batayein\n• 24/7 available hai\n\nInternet nahi hai tab bhi kaam karta hai — sirf basic phone signal chahiye.",
+                "eSanjeevani Telemedicine:\n• Doctor se FREE video/phone call\n• Nabha Civil Hospital se eSanjeevani available hai\n• ASHA worker se help lein appointment ke liye\n• Rural patients ke liye PHC se bhi telemedicine milti hai"
             ]
         },
         {
-            "tag": "lab_tests",
+            "tag": "hospital_status",
             "patterns": [
-                "blood test kahan hoga",
-                "lab test free hai kya",
-                "sugar test karwana hai",
-                "hemoglobin test kaise hoga",
-                "TB test ke liye kya karna hai",
-                "urine test kahan hota hai",
-                "X-ray facility hai kya",
-                "pathology lab timings",
-                "test result kab milega",
-                "kya test bina doctor ke ho sakta hai"
+                "Nabha hospital mein doctor hai kya",
+                "kya aaj hospital khula hai",
+                "OPD chal rahi hai kya",
+                "hospital ka time kya hai",
+                "Civil Hospital mein kaunse doctor hain",
+                "hospital mein doctor available hai",
+                "PHC kab khulti hai",
+                "Sub-centre timing",
+                "specialist doctor kab milega",
+                "maternity ward hai kya Nabha mein"
             ],
             "responses": [
-                "Nabha Civil Hospital mein FREE lab tests: Complete Blood Count (CBC), Blood Sugar (Fasting/PP), Hemoglobin, Urine Routine, Malaria test, TB sputum test, aur Pregnancy test. Doctor ka prescription zaroori hai.",
-                "Lab timing: Subah 8:00 AM se 12:00 PM (sample collection). Results usually same day ya agle din milte hain. TB test ke results 2 din mein aate hain.",
-                "X-Ray aur Ultrasound: Nabha Civil Hospital mein available hai, FREE for referred patients. Direct nahi milta — pehle doctor se milein.",
-                "Agar lab closed ho ya test available nahi: Jan Aushadhi Kendra ke paas kaafi private labs hain jahan basic tests ₹50–₹200 mein hote hain — sarkari lab se kaafi saste."
+                "Nabha Civil Hospital:\n• OPD: Subah 8:00 AM – 2:00 PM (Monday–Saturday)\n• Emergency: 24 ghante, 7 din\n• Maternity ward: Available\n• Lab tests: 8 AM – 12 PM (sample collection)\n• Sunday: Sirf Emergency\n\nSubah 7:30 baje pahunch jayen token lene — queue jaldi lagti hai.",
+                "Nabha Civil Hospital mein FREE services:\n✅ Antenatal checkup (ANC)\n✅ Normal delivery aur C-section\n✅ Blood tests (HB, BP, sugar, urine protein)\n✅ Ultrasound (referred patients ke liye)\n✅ Vaccinations (maa aur bachche)\n✅ IFA, Calcium, TT — FREE\n✅ Emergency obstetric care\n\nKoi payment nahi lagti in sab ke liye.",
+                "PMSMA Clinic — 9 tarikh ko har mahine:\n• Specialist doctor milte hain\n• High-risk maamle identify hote hain\n• Ultrasound FREE milta hai agar zarurat ho\n• Blood tests sab FREE\n\nPHC aur CHC pe bhi hota hai — apni ASHA se puchein wahan ka schedule."
             ]
         },
         {
-            "tag": "diabetes_hypertension",
+            "tag": "symptom_checker",
             "patterns": [
-                "sugar ki bimari hai mujhe",
-                "blood pressure high rehta hai",
-                "diabetes ke symptoms kya hain",
-                "BP ki dawai khatam ho gayi",
-                "sugar level check karna hai",
-                "lifestyle changes for diabetes",
-                "kya main mitha kha sakta hun",
-                "BP control karne ka tarika",
-                "insulin kahan milegi",
-                "NCD clinic kya hota hai"
+                "mujhe bukhaar hai",
+                "pet dard ho raha hai",
+                "I have fever",
+                "sir dard hai aur chakkar aa rahe hain",
+                "body me dard hai",
+                "I feel very weak and tired",
+                "meri tabiyat theek nahi hai",
+                "throat pain and cold",
+                "ulti aa rahi hai",
+                "bahut thakaan hai"
             ],
             "responses": [
-                "Diabetes symptoms: Baar baar pyas lagna, baar baar peshab aana, aankhon ka dhundhla dikhna, thakaan. Agar yeh symptoms hain — FREE blood sugar test ke liye Nabha Civil Hospital jayein.",
-                "NCD (Non-Communicable Disease) Clinic: Nabha Civil Hospital mein har hafte FREE NCD clinic hoti hai. Diabetes aur BP dono manage hote hain — FREE medicine bhi milti hai. Doctor se NCD card banwaayen.",
-                "Diet tips for rural patients: Atta+bajra roti prefer karein, white rice kam karein. Gur aur cheeni kam karein. Sarson ka saag, methi — yeh natural sugar control karte hain. Roz 30 min kheton mein kaam ya chalna bhi medication jaisa kaam karta hai.",
-                "BP emergency: Agar BP 180/120 se zyada ho, severe headache ho, ya aankhon ke aage andhera aaye — yeh HYPERTENSIVE CRISIS hai. 108 call karein aur seedha hospital jayein. Khud dawai dose mat badhayen."
-            ]
-        },
-        {
-            "tag": "tuberculosis_tb",
-            "patterns": [
-                "2 hafte se khansi hai",
-                "TB ke symptoms kya hain",
-                "TB ka ilaaj free hai kya",
-                "khansi mein khoon aa raha hai",
-                "TB test kaise hota hai",
-                "TB medicine kitne time leni hoti hai",
-                "DOTS therapy kya hai",
-                "kya TB chhoot sakti hai",
-                "TB patient ko kya khaana chahiye",
-                "Nikshay Poshan Yojana kya hai"
-            ],
-            "responses": [
-                "TB ke symptoms: 2 hafte se zyada khansi, khansi mein khoon, raat ko paseena, bina karan wajan ghatna, sham ko bukhaar. Yeh symptoms hain toh TURANT Nabha Civil Hospital mein FREE sputum test karwayen.",
-                "TB ka ilaaj: DOTS (Directly Observed Treatment, Short-course) ke tahat 6 mahine ki FREE dawai milti hai. Ilaaj beech mein band karna BAHUT khatarnaak hai — dawai resistant ho jaati hai.",
-                "Nikshay Poshan Yojana: TB patients ko ₹500 per month nutrition support milti hai government se — directly bank account mein. Hospital mein enrollment FREE hai. Apna bank account number saath laayein.",
-                "TB aur social stigma: TB ek bimari hai, koi paap nahi. Dawaai lene se poori tarah theek hota hai. Apne ghar walon ko bataayen taaki woh bhi test karwaayein — family members ka free test hota hai."
-            ]
-        },
-        {
-            "tag": "eye_care",
-            "patterns": [
-                "aankhon mein jalan ho rahi hai",
-                "dhundhla dikh raha hai",
-                "chasma banana hai",
-                "motiyabind ka ilaaj",
-                "aankhon se paani aa raha hai",
-                "raat ko kam dikhta hai",
-                "bachche ko school mein board nahi dikhta",
-                "free eye check-up kahan hoga",
-                "eye camp kab aayega",
-                "red eyes ho gayi hain"
-            ],
-            "responses": [
-                "Nabha Civil Hospital mein Eye OPD specific days pe hoti hai. FREE check-up milti hai. Motiyabind (Cataract) ke liye FREE surgery bhi available hai — government scheme ke tahat.",
-                "Red/Itchy eyes (Conjunctivitis): Saaf paani se aankhein dhoyein. Apni aankhein haath se na ragdein. Yeh bahut contagious hai — towel, kapda share na karein. 2 din mein theek na ho toh doctor se milein.",
-                "Vision problems in children: Agar bachche ko board nahi dikhta ya aankhein sikadate hain — yeh bahut common hai. School health programs mein free eye check hoti hai. ASHA worker se poochein.",
-                "Eye camps: Nabha region mein regular FREE eye camps lagte hain. Chasma, check-up, aur surgery sab free milti hai. Apni gram panchayat ya ASHA worker se agle camp ki date poochein."
-            ]
-        },
-        {
-            "tag": "skin_conditions",
-            "patterns": [
-                "khujli ho rahi hai",
-                "daane aa gaye hain body pe",
-                "chehre pe pimples",
-                "fungal infection kya hota hai",
-                "wound infection ho gayi",
-                "khet mein kaam karte waqt rash aaya",
-                "bachche ko chickenpox hai",
-                "sar mein joon hain",
-                "skin dry ho gayi hai",
-                "zeher wala paudha chua"
-            ],
-            "responses": [
-                "Fungal infection (Daad/Ringworm): Prabhavit jagah ko saaf aur sukha rakhen. Clotrimazole cream (antifungal) hospital se FREE milti hai. 2-4 hafte lagaate rahein — beech mein band na karein.",
-                "Wound infection: Laal ho rahi hai, sujan hai, ya mawad aa raha hai — yeh infection ke signs hain. Saaf paani aur antiseptic se dhoyen. Tetanus injection zaroori ho sakta hai khet mein chot ke baad — hospital jayein.",
-                "Chickenpox: Kaafi contagious hai. Bachche ko school mat bhejein. Neem ke patte paani mein ubaalkar nahlaayen (traditional remedy). Khanch mat, infection badh sakti hai. Anti-viral dawai doctor se lein.",
-                "Pesticide rash (khet mein kaam karte waqt): Turant uss jagah ko saaf paani se 15 minute dhoyein. Agar aankhon mein gaya ho — paani se dhoyein aur TURANT hospital jayein. Yeh medical emergency ho sakti hai."
-            ]
-        },
-        {
-            "tag": "nutrition_diet",
-            "patterns": [
-                "kya khaana chahiye bimari mein",
-                "anemia ke liye kya khaayen",
-                "khoon ki kami hai",
-                "bachche ko kya khilaayein",
-                "cheap healthy food",
-                "pregnancy mein diet kya ho",
-                "protein wala khana",
-                "vitamin D ki kami hai",
-                "weak body ke liye khana",
-                "farmer ke liye sahi khaana"
-            ],
-            "responses": [
-                "Anemia (Khoon ki kami) ke liye: Hara saag (palak, methi, sarson), chana, lobia, aur til roz khaayen. Khaane ke baath nimbu paani piyein — vitamin C iron absorb karne mein help karta hai. FREE Iron tablets hospital ya anganwadi se lein.",
-                "Cheap protein sources for rural families: Daal (masoor/moong/chana) — roz khaayen. Eggs — sab se sasta complete protein. Sattu — bahut sasta, protein se bhara. Dahi — gut health ke liye bhi achha.",
-                "Vitamin D (Dhoop ki zaroorat): Subah 10-11 baje 20 minute dhoop mein baithein — yeh FREE medicine hai. Doodh aur eggs bhi achhe sources hain. Vitamin D ki kami se haddiyan kamzor hoti hain.",
-                "Khet mein kaam karne walon ke liye: Zyada paseena aane se namak aur paani ki kami hoti hai. ORS ya nimbu paani + namak + cheeni ka gharelu ORS peete rahein. Subah heavy meal, sham ko light meal rakhein."
-            ]
-        },
-        {
-            "tag": "vaccination_immunization",
-            "patterns": [
-                "teeka kab lagwaayen",
-                "vaccine schedule kya hai",
-                "COVID vaccine available hai",
-                "adult vaccination hoti hai kya",
-                "tetanus injection kab lena chahiye",
-                "baby ka pehla teeka kab hota hai",
-                "polio drop kab dena hai",
-                "immunization card kahan milega",
-                "measles vaccine",
-                "free vaccination kahan hoti hai"
-            ],
-            "responses": [
-                "Shishu vaccination (FREE at Nabha Civil): Janm pe — BCG, OPV-0, Hep-B. 6 weeks — Pentavalent, OPV, Rotavirus. 9-12 months — Measles-Rubella. 16-24 months — Booster doses. Apna Mother & Child card update rakhein.",
-                "Tetanus injection: Khet mein ya kisi zaang-daag cheez se chot aaye toh 24 ghante ke andar tetanus injection FREE milta hai hospital mein. 5 saal mein pichla tetanus nahi liya — turant lein.",
-                "Village Immunization Day: ASHA worker ke saath milke agle village health & nutrition day ka pata karein. Har mahine hoti hai — saari FREE vaccines ek jagah milti hain.",
-                "Adults ko bhi vaccines chahiye: Influenza (flu) — bujaurg logon ke liye. Hepatitis B — healthcare workers ke liye. COVID boosters — available at hospital. Doctor se poochein aap ke liye kya recommended hai."
-            ]
-        },
-        {
-            "tag": "first_aid",
-            "patterns": [
-                "kaat gaya hai haath",
-                "jal gaya hai",
-                "haddi toot gayi kya",
-                "bachcha gir gaya",
-                "aankhon mein kuch chala gaya",
-                "bijli ka jhatka laga",
-                "drowning kya karein",
-                "unconscious hai koi",
-                "bleeding band nahi ho rahi",
-                "heat stroke symptoms"
-            ],
-            "responses": [
-                "Cut/Wound (Kaat gaya): Saaf kapde se 5-10 minute pressure daalein. Saaf paani se dhoyen. Antiseptic lagayen. Agar bahut gehri chot ho ya khoon band na ho — TURANT hospital. Zaang wali cheez se kati ho toh tetanus zaroor lein.",
-                "Burns (Jalna): Turant 15-20 minute THANDE paani se dhoyen. Kapde mat nikaalein agar chip gaye hain. Butter/oil/toothpaste BILKUL mat lagayen — infection hoti hai. Agar bada area jalay ya chehra/haath jalay — 108 call karein.",
-                "Electric Shock (Bijli ka jhatka): Pehle bijli band karein ya wood se person ko hataayen. Seedha mat chhuyen. Agar saans nahi aa rahi — CPR shuru karein (30 chest compressions, 2 breaths). 108 call karein.",
-                "Heat Stroke (Loo lagna): Thandi jagah le jaayein, thanda paani piyein. Kapde dheele karein. Thandi paani ki patti maathen, baghon, aur gardan pe rakhen. Agar behosh ho — 108 call karein. Summer mein dopahar 12-4 baje bahar kaam na karein."
-            ]
-        },
-        {
-            "tag": "referral_transport",
-            "patterns": [
-                "bada hospital kahan hai",
-                "ambulance kaise bulaayen",
-                "Patiala hospital kaise jaayein",
-                "specialist ke liye kahan jaana hoga",
-                "transport nahi hai hospital ke liye",
-                "free ambulance available hai kya",
-                "ghar se hospital dur hai",
-                "referral letter kya hota hai",
-                "district hospital ka address",
-                "emergency mein gaadi kaise milegi"
-            ],
-            "responses": [
-                "FREE Ambulance: 108 (24/7, koi bhi area). Yeh life-threatening emergencies ke liye hai. ASHA worker bhi transport help kar sakti hai deliveries aur serious cases ke liye — unka number apne paas rakhein.",
-                "Referral process: Nabha Civil Hospital mein jo cases handle nahi ho sakte woh Rajindra Hospital Patiala ya PGI Chandigarh refer hote hain. Refer hone par GOVERNMENT TRANSPORT ya fuel reimbursement milta hai.",
-                "Rajindra Hospital, Patiala: 35 km from Nabha. Bus available (₹30-50). Yahan specialist doctors hain — Neurology, Cardiology, Nephrology etc. Nabha se referral letter zaroor laana.",
-                "Aadhar se linked transport schemes: Ayushman card se referred patients ko Patiala tak transport cost reimburse hoti hai. Hospital ke social welfare officer se milein — woh process mein help karenge."
+                "Bukhaar (Fever) pregnancy mein:\n🟡 100°F–102°F: Paracetamol lein, zyada paani piyein — 24 ghante mein doctor se milein\n🔴 102°F se zyada ya 2 din se zyada: Aaj hi Nabha Civil Hospital jayein — pregnancy mein tez bukhaar dangerous hai\n\nAspirin aur ibuprofen MAT lein — pregnancy ke liye safe nahi hain.",
+                "Thakaan / Kamazoori pregnancy mein:\n• Aam baat hai — par bahut zyada thakaan Hemoglobin ki kami ka sign ho sakta hai\n• Anemia check karwayen — Hb test FREE hai Civil Hospital mein\n• IFA tablet lena band mat karein\n• Kuch light khaatey rahein — 3 baar ki jagah 5-6 baar thoda thoda\n\nHb 7 se kam hai to — 🔴 HIGH RISK — hospital jayein aaj.",
+                "Pet dard pregnancy mein:\n🟢 Normal: Ligament stretching (sharp pain sides mein — normal)\n🟡 Consult: Continuous dard 2 ghante se zyada\n🔴 EMERGENCY: Tez dard + bleeding + baby ki movement nahi — ABHI 108"
             ]
         }
     ]

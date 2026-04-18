@@ -28,7 +28,7 @@ import { assess, buildPatientInputsFromProfile } from "../services/ruleEngine";
 import { normalizeAncInputs, riskTone, statusLabel } from "../services/ancAssessment";
 
 const quickActions = [
-  { title: "Talk to Doctor", icon: "message-square", color: "#5DC1B9", route: "Chat" },
+  { title: "Chat with Mauli", icon: "message-square", color: "#5DC1B9", route: "Chat" },
   { title: "Health Records", icon: "file-text", color: "#F97316", route: "HealthRecords" },
   { title: "My Calendar", icon: "calendar", color: "#6366F1", route: "Calendar" },
   { title: "Call with Ai", icon: "mic", color: "#EC4899", route: "VapiCall" },

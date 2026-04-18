@@ -85,26 +85,29 @@ function pickResponse(responses) {
 // ─── Fallback messages ───────────────────────────────────────────────────────
 
 const FALLBACKS = [
-  "Mujhe iske baare mein seedha jaankari nahi hai. Kuch aur pooch sakte hain — symptoms, hospital, medicines, ya government schemes?\n\nAap yeh pooch sakte hain:\n• \"Mujhe bukhaar hai kya karoon?\"\n• \"Hospital mein doctor hai kya?\"\n• \"Free medicine kahan milegi?\"",
-  "Is sawaal ka jawab mere paas nahi hai, lekin main inme madad kar sakta hoon:\n• Symptoms & first aid\n• Nabha Civil Hospital info\n• Free medicines & lab tests\n• Maternal & child health\n• Government health schemes",
-  "Samajh nahi paya. Kripya apna sawaal simple bhasha mein poochein ya neeche diye topics mein se kuch try karein:\n🏥 Hospital • 💊 Medicine • 🤒 Symptoms • 👶 Child Health • 🏛️ Schemes",
+  "Mujhe iske baare mein seedha jaankari nahi hai. Mauli se poochein:\n\nAap yeh pooch sakte hain:\n• \"Mera agla ANC checkup kab hai?\"\n• \"IFA tablet kab leni chahiye?\"\n• \"Baby ki movement kam ho gayi — kya karein?\"\n• \"JSY/JSSK scheme kya milta hai?\"",
+  "Is sawaal ka jawab mere paas nahi hai. Main inme madad kar sakta hoon:\n• ANC checkup schedule\n• Pregnancy supplements (IFA, Calcium, TT)\n• Emergency obstetric guidance\n• Government schemes (JSY, JSSK, PMSMA, PM-JAY)\n• Newborn care aur vaccination",
+  "Samajh nahi paya. Kripya apna sawaal simple bhasha mein poochein:\n🤰 ANC • 💊 Supplements • 🚨 Emergency • 👶 Newborn • 🏛️ Schemes\n\nYa seedha ASHA worker se milein.",
 ];
 
 // ─── Follow-up suggestions by intent ─────────────────────────────────────────
 
 const SUGGESTIONS = {
-  symptom_checker: ["Hospital kahan hai?", "Free medicine milegi?", "Ambuance kaise bulaayen?"],
-  hospital_status: ["OPD timing kya hai?", "Lab test free hai kya?", "Doctor se appointment?"],
-  medicine_availability: ["Jan Aushadhi kya hai?", "Diabetes ki dawai?", "Hospital timing?"],
-  emergency: ["Ambulance number kya hai?", "Nearest hospital?", "First aid tips?"],
-  maternal_health: ["Baby ka teeka schedule?", "Janani Suraksha Yojana?", "Iron tablets?"],
-  child_health: ["Malnutrition treatment?", "Anganwadi kya deta hai?", "Child vaccination?"],
-  mental_health: ["Helpline number kya hai?", "Stress ke liye tips?"],
-  government_schemes: ["Ayushman card kaise banaayen?", "Free ilaaj kaise milega?"],
-  diabetes_hypertension: ["NCD clinic kahan hai?", "Diet tips diabetes ke liye?", "BP dawai?"],
-  tuberculosis_tb: ["DOTS therapy kya hai?", "Nikshay Poshan Yojana?", "TB test free hai?"],
-  first_aid: ["Ambulance kaise bulaayen?", "Bleeding rokne ka tarika?"],
-  vaccination_immunization: ["Baby ka pehla teeka?", "Tetanus injection kab lein?"],
+  anc_schedule: ["PMSMA kab hoga?", "IFA tablet kab leni chahiye?", "High risk mein checkup schedule?"],
+  risk_assessment: ["ANC checkup kab hai?", "BP check kaise karein?", "Hemoglobin badhane ka tarika?"],
+  emergency_obstetric: ["Ambulance 108 number", "Rajindra Hospital kaise jaayein?", "JSSK mein transport FREE hai?"],
+  antenatal_supplements: ["IFA tablet se ulti aati hai — kya karein?", "Calcium kab leni chahiye?", "TT injection kab lagaye?"],
+  maternal_symptoms: ["BP high hai kya karein?", "Hemoglobin check kaise hoga?", "Hospital kab jaana zaroori hai?"],
+  newborn_care: ["Baby ka pehla teeka kab?", "Breastfeeding kaise shuru karein?", "Jaundice newborn mein?"],
+  government_maternal_schemes: ["JSY mein paise kaise milenge?", "Ayushman card kaise banaayen?", "PMSMA kab hota hai?"],
+  abha_health_records: ["ABHA card kaise banwayen?", "Purane ANC records kahan hain?"],
+  asha_anm_support: ["ASHA worker ka number chahiye", "ANM clinic kab khulti hai?", "Anganwadi se kya milega?"],
+  maternal_nutrition: ["Anemia ke liye kya khayein?", "Pregnancy mein kya nahi khaana?", "Protein wala sasta khaana?"],
+  referral_transport_maternal: ["Ambulance 108 FREE hai?", "Rajindra Hospital Patiala kaise?", "JSSK transport claim kaise karein?"],
+  general_greeting: ["ANC schedule batao", "Emergency number kya hai?", "Government schemes pregnancy mein?"],
+  emergency_contact: ["108 ambulance", "104 helpline", "Nabha Civil Hospital number"],
+  hospital_status: ["OPD timing kya hai?", "Lab test free hai kya?", "PMSMA schedule?"],
+  symptom_checker: ["Fever pregnancy mein dangerous hai?", "Baby ki movement kam ho gayi", "Ambulance kaise bulaayen?"],
 };
 
 // ─── Main entry point ─────────────────────────────────────────────────────────
