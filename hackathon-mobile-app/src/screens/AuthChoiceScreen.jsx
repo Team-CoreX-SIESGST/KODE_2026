@@ -486,8 +486,8 @@ export default function AuthChoiceScreen({ navigation, route }) {
             
           
 
-            <Text style={styles.title}>{t("auth.doctor_login_title")}</Text>
-           
+            <Text style={styles.doctorHeroTitle}>{t("auth.doctor_login_title")}</Text>
+            
 
             <View style={styles.tabRow}>
               <Pressable
@@ -1083,6 +1083,7 @@ const styles = StyleSheet.create({
     color: "#0F172A",
     lineHeight: 40,
     textAlign: "center",
+    marginTop: 16,
   },
   doctorHeroSubtitle: {
     fontSize: 15,
