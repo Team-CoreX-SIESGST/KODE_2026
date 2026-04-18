@@ -1,6 +1,5 @@
 import Patient from '../models/Patient.js';
-import DoctorAccount from '../models/DoctorAccount.js';
-import AshaWorkerAccount from '../models/AshaWorkerAccount.js';
+import AnmAccount from '../models/AnmAccount.js';
 import { verifyToken } from '../utils/jwt.js';
 
 const buildProtect = (Model, role) => async (req, res, next) => {
@@ -21,11 +20,13 @@ const buildProtect = (Model, role) => async (req, res, next) => {
         }
 
         const user = await Model.findById(decoded.id).select('-password');
+
         if (!user) {
             return res.status(401).json({ message: 'Not authorized, user not found' });
         }
 
         req.user = user;
+        req.authRole = role;
         next();
     } catch (error) {
         console.error(error);
@@ -34,5 +35,4 @@ const buildProtect = (Model, role) => async (req, res, next) => {
 };
 
 export const protectPatient = buildProtect(Patient, 'patient');
-export const protectDoctor = buildProtect(DoctorAccount, 'doctor');
-export const protectAsha = buildProtect(AshaWorkerAccount, 'asha');
+export const protectAnm = buildProtect(AnmAccount, 'anm');

@@ -39,6 +39,55 @@ const addressSchema = new mongoose.Schema(
     { _id: false }
 );
 
+const demographicSchema = new mongoose.Schema(
+    {
+        ageYears: { type: Number },
+        maritalStatus: { type: String, trim: true },
+        education: { type: String, trim: true },
+        occupation: { type: String, trim: true },
+        phoneNumber: { type: String, trim: true },
+        emergencyContactName: { type: String, trim: true },
+        emergencyContactPhone: { type: String, trim: true },
+        village: { type: String, trim: true },
+        block: { type: String, trim: true },
+        district: { type: String, trim: true }
+    },
+    { _id: false }
+);
+
+const pregnancyDetailsSchema = new mongoose.Schema(
+    {
+        currentlyPregnant: { type: Boolean, default: true },
+        gravida: { type: Number },
+        parity: { type: Number },
+        abortions: { type: Number },
+        livingChildren: { type: Number },
+        lastMenstrualPeriod: { type: String, trim: true },
+        expectedDeliveryDate: { type: String, trim: true },
+        gestationalAgeWeeks: { type: Number },
+        highRiskHistory: [{ type: String, trim: true }],
+        previousCSection: { type: Boolean, default: false },
+        multiplePregnancy: { type: Boolean, default: false },
+        lastUpdatedAt: { type: Date }
+    },
+    { _id: false }
+);
+
+const cdssSummarySchema = new mongoose.Schema(
+    {
+        latestRiskLevel: {
+            type: String,
+            enum: ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'],
+            default: 'LOW'
+        },
+        latestVisit: { type: mongoose.Schema.Types.ObjectId, ref: 'ClinicalVisit' },
+        latestAssessmentAt: { type: Date },
+        priorityScore: { type: Number, default: 0 },
+        latestAlerts: [{ type: String, trim: true }]
+    },
+    { _id: false }
+);
+
 const healthRecordsSchema = new mongoose.Schema(
     {
         bloodGroup: { type: String, trim: true },
@@ -55,70 +104,11 @@ const healthRecordsSchema = new mongoose.Schema(
     { _id: false }
 );
 
-const vitalsSchema = new mongoose.Schema(
-    {},
-    { _id: false, strict: false }
-);
-
-const prescriptionSchema = new mongoose.Schema(
-    {
-        medicine: { type: String, trim: true },
-        dosage: { type: String, trim: true },
-        frequency: { type: String, trim: true },
-        duration: { type: String, trim: true },
-        instructions: { type: String, trim: true }
-    },
-    { _id: false }
-);
-
-const labTestSchema = new mongoose.Schema(
-    {
-        testName: { type: String, trim: true },
-        reportId: { type: String, trim: true },
-        result: { type: mongoose.Schema.Types.Mixed },
-        referenceRange: { type: mongoose.Schema.Types.Mixed },
-        impression: { type: String, trim: true },
-        performedBy: { type: String, trim: true },
-        date: { type: String, trim: true },
-        status: { type: String, trim: true },
-        reportUrl: { type: String, trim: true }
-    },
-    { _id: false }
-);
-
-const consultationSchema = new mongoose.Schema(
-    {
-        consultationId: { type: String, trim: true },
-        date: { type: String, trim: true },
-        doctorName: { type: String, trim: true },
-        doctorId: { type: String, trim: true },
-        facility: { type: String, trim: true },
-        type: { type: String, trim: true },
-        chiefComplaint: { type: String, trim: true },
-        diagnosis: [{ type: String, trim: true }],
-        vitals: { type: vitalsSchema },
-        prescriptions: [prescriptionSchema],
-        labTests: [labTestSchema],
-        followUpDate: { type: String, trim: true },
-        notes: { type: String, trim: true }
-    },
-    { _id: false }
-);
-
-const insuranceSchema = new mongoose.Schema(
-    {
-        ayushmanBharat: { type: Boolean, default: false },
-        policyNumber: { type: String, trim: true },
-        validTill: { type: String, trim: true }
-    },
-    { _id: false }
-);
-
-const ashaWorkerSchema = new mongoose.Schema(
+const anmWorkerSchema = new mongoose.Schema(
     {
         name: { type: String, trim: true },
         contact: { type: String, trim: true },
-        village: { type: String, trim: true }
+        serviceArea: { type: String, trim: true }
     },
     { _id: false }
 );
@@ -126,13 +116,14 @@ const ashaWorkerSchema = new mongoose.Schema(
 const patientSchema = new mongoose.Schema(
     {
         abha_profile: { type: abhaProfileSchema, required: true },
+        demographicData: { type: demographicSchema },
+        pregnancyDetails: { type: pregnancyDetailsSchema },
+        cdssSummary: { type: cdssSummarySchema },
         address: { type: addressSchema },
         health_records: { type: healthRecordsSchema },
-        consultations: [consultationSchema],
-        insurance: { type: insuranceSchema },
-        ashaWorker: { type: ashaWorkerSchema },
-        ashaWorkerId: { type: mongoose.Schema.Types.ObjectId, ref: 'AshaWorkerAccount' },
-        ashaWorkerAssignedAt: { type: Date },
+        anmWorker: { type: anmWorkerSchema },
+        anmWorkerId: { type: mongoose.Schema.Types.ObjectId, ref: 'AnmAccount' },
+        anmWorkerAssignedAt: { type: Date },
         locationCoordinates: {
             latitude: { type: Number },
             longitude: { type: Number }

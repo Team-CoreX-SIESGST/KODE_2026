@@ -9,34 +9,37 @@ const locationSchema = new mongoose.Schema(
     { _id: false }
 );
 
-const ashaWorkerAccountSchema = new mongoose.Schema(
+const anmAccountSchema = new mongoose.Schema(
     {
         name: { type: String, required: true, trim: true },
         username: { type: String, required: true, unique: true, index: true, trim: true, lowercase: true },
         password: { type: String, required: true },
+        phoneNumber: { type: String, trim: true, index: true },
+        facilityName: { type: String, trim: true },
+        serviceArea: { type: String, trim: true },
         locationCoordinates: { type: locationSchema, required: true }
     },
     { timestamps: true }
 );
 
-ashaWorkerAccountSchema.pre('save', async function (next) {
+anmAccountSchema.pre('save', async function (next) {
     if (!this.isModified('password')) return next();
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
     next();
 });
 
-ashaWorkerAccountSchema.methods.matchPassword = async function (enteredPassword) {
-    return enteredPassword == this.password;
+anmAccountSchema.methods.matchPassword = async function (enteredPassword) {
+    return bcrypt.compare(enteredPassword, this.password);
 };
 
-ashaWorkerAccountSchema.set('toJSON', {
+anmAccountSchema.set('toJSON', {
     transform: (doc, ret) => {
         delete ret.password;
         return ret;
     }
 });
 
-const AshaWorkerAccount = mongoose.model('AshaWorkerAccount', ashaWorkerAccountSchema);
+const AnmAccount = mongoose.model('AnmAccount', anmAccountSchema);
 
-export default AshaWorkerAccount;
+export default AnmAccount;

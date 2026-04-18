@@ -83,8 +83,6 @@ const seed = async () => {
                 abha_profile: patient.abha_profile,
                 address: patient.address,
                 health_records: patient.health_records,
-                consultations: patient.consultations,
-                insurance: patient.insurance,
                 locationCoordinates:
                     patient.locationCoordinates ||
                     resolveTownCoordinates(patient.address || {}).coords
