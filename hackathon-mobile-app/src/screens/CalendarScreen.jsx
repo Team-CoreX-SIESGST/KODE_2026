@@ -5,6 +5,8 @@ import {
   View,
   Text,
   TouchableOpacity,
+  Modal,
+  TextInput,
   StyleSheet,
   Animated,
   Alert,
@@ -17,9 +19,18 @@ const IS_EXPO_GO =
 import { useNavigation } from "@react-navigation/native";
 import { Feather } from "@expo/vector-icons";
 import { AuthContext } from "../context/AuthContext";
-import { patientMe } from "../services/api";
+import { patientMe, patientUpdateRecord, patientCreateRecord } from "../services/api";
 import { assess, buildPatientInputsFromProfile } from "../services/ruleEngine";
-import { normalizeAncInputs } from "../services/ancAssessment";
+import {
+  normalizeAncInputs,
+  ANC_NUMERIC_FIELDS,
+  ANC_BOOLEAN_FIELDS,
+  URINE_PROTEIN_OPTIONS,
+  riskTone,
+  sanitizeNumericInput,
+  statusLabel,
+  toInputValue,
+} from "../services/ancAssessment";
 import {
   scheduleAncReminders,
   requestNotificationPermission,
@@ -98,6 +109,12 @@ function generateAncEvents(profile, assessment) {
       riskLevel === "MEDIUM" ? "alert-circle" : "check-circle";
     const weeksAtVisit = v?.maternal?.observations?.gestationalAgeWeeks;
     const weekLabel = weeksAtVisit ? ` · Week ${weeksAtVisit}` : "";
+    // Build a report-like object so the edit modal can use it
+    const reportSnap = {
+      reportId: v.visitId || `visit-${idx}`,
+      rawDate: v.visitDate,
+      ancInputs: v?.ancInputs || {},
+    };
     events.push({
       id: `visit-${v.visitId || idx}`,
       date: d,
@@ -109,6 +126,7 @@ function generateAncEvents(profile, assessment) {
       color: riskColor,
       icon: riskIcon,
       riskLevel,
+      report: reportSnap,
     });
   });
 
@@ -240,6 +258,14 @@ const TYPE_CONFIG = {
 
 // ─── COMPONENT ────────────────────────────────────────────────────────────────
 
+// ─── DEFAULT FORM DRAFT ───────────────────────────────────────────────────────
+function buildDraft(profile) {
+  return {
+    date: new Date().toISOString().split("T")[0],
+    ...buildPatientInputsFromProfile(profile || {}),
+  };
+}
+
 export default function CalendarScreen() {
   const navigation = useNavigation();
   const { user, token } = useContext(AuthContext);
@@ -250,6 +276,11 @@ export default function CalendarScreen() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [activeTab, setActiveTab] = useState("overview"); // "overview" | "timeline"
 
+  // ── Edit / Add modal state
+  const [modalVisible, setModalVisible] = useState(false);
+  const [editingReport, setEditingReport] = useState(null); // null = adding new
+  const [formData, setFormData] = useState(() => buildDraft({}));
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -258,21 +289,75 @@ export default function CalendarScreen() {
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
-      try {
-        if (token) {
-          const data = await patientMe(token);
-          setProfile(data || null);
-        }
-      } catch {
-        setProfile(null);
-      } finally {
-        setLoading(false);
+  // ── Live assessment of form while editing
+  const normalizedForm = useMemo(() => normalizeAncInputs(formData), [formData]);
+  const formAssessment = useMemo(() => assess(normalizedForm), [normalizedForm]);
+
+  const loadProfile = async () => {
+    setLoading(true);
+    try {
+      if (token) {
+        const data = await patientMe(token);
+        setProfile(data || null);
       }
-    })();
+    } catch {
+      setProfile(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadProfile();
   }, [token]);
+
+  // ── Open edit modal for a past visit
+  const handleOpenEditModal = (report) => {
+    setEditingReport(report);
+    setFormData({
+      date: report.rawDate
+        ? new Date(report.rawDate).toISOString().split("T")[0]
+        : new Date().toISOString().split("T")[0],
+      ...(report.ancInputs || {}),
+    });
+    setModalVisible(true);
+  };
+
+  // ── Open add modal (new blank record)
+  const handleOpenAddModal = () => {
+    setEditingReport(null);
+    setFormData(buildDraft(profile || {}));
+    setModalVisible(true);
+  };
+
+  // ── Save record (create or update)
+  const handleSaveRecord = async () => {
+    const payload = {
+      ...normalizedForm,
+      date: formData.date,
+      testName: "Maternal ANC Assessment",
+      impression: formAssessment.reasons.join(" | "),
+      status: formAssessment.riskBand,
+      score: formAssessment.score,
+      reasons: formAssessment.reasons,
+      hindiReasons: formAssessment.hindiReasons,
+      decision: formAssessment.decision,
+      emergencyType: formAssessment.emergencyType,
+      nextVisitWeeks: formAssessment.nextVisitWeeks,
+      referralLevel: formAssessment.referralLevel,
+    };
+    try {
+      if (editingReport?.reportId) {
+        await patientUpdateRecord(token, editingReport.reportId, payload);
+      } else {
+        await patientCreateRecord(token, payload);
+      }
+      setModalVisible(false);
+      await loadProfile();
+    } catch (err) {
+      Alert.alert("Error", err.message || "Failed to save record");
+    }
+  };
 
   useEffect(() => {
     requestNotificationPermission().then(setNotifEnabled);
@@ -397,16 +482,24 @@ export default function CalendarScreen() {
           <Feather name="arrow-left" size={20} color="#1E293B" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Calendar</Text>
-        <TouchableOpacity
-          style={[styles.iconBtn, notifEnabled && styles.iconBtnActive]}
-          onPress={handleEnableNotifications}
-        >
-          <Feather
-            name={notifEnabled ? "bell" : "bell-off"}
-            size={18}
-            color={notifEnabled ? "#FFFFFF" : "#64748B"}
-          />
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            style={[styles.iconBtn, styles.iconBtnAdd]}
+            onPress={handleOpenAddModal}
+          >
+            <Feather name="plus" size={18} color="#5DC1B9" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.iconBtn, notifEnabled && styles.iconBtnActive]}
+            onPress={handleEnableNotifications}
+          >
+            <Feather
+              name={notifEnabled ? "bell" : "bell-off"}
+              size={18}
+              color={notifEnabled ? "#FFFFFF" : "#64748B"}
+            />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* ── Tabs */}
@@ -577,7 +670,13 @@ export default function CalendarScreen() {
                 <Text style={styles.sectionTitle}>
                   {isSameDay(selectedDate, today) ? "Today" : formatDate(selectedDate)}
                 </Text>
-                {selectedEvents.map(ev => <EventCard key={ev.id} event={ev} />)}
+                {selectedEvents.map(ev => (
+                  <EventCard
+                    key={ev.id}
+                    event={ev}
+                    onEdit={ev.type === "history" ? () => handleOpenEditModal(ev.report) : null}
+                  />
+                ))}
               </View>
             )}
           </>
@@ -599,21 +698,167 @@ export default function CalendarScreen() {
               {pastEvents.length === 0 ? (
                 <EmptyState icon="clock" text="No past visits recorded" />
               ) : (
-                pastEvents.map(ev => <EventCard key={ev.id} event={ev} dimmed />)
+                pastEvents.map(ev => (
+                  <EventCard
+                    key={ev.id}
+                    event={ev}
+                    dimmed
+                    onEdit={ev.report ? () => handleOpenEditModal(ev.report) : null}
+                  />
+                ))
               )}
             </View>
           </>
         )}
       </Animated.ScrollView>
+
+      {/* ─── ANC Record Edit / Add Modal ──────────────────────────────── */}
+      <Modal
+        animationType="slide"
+        transparent
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            {/* Modal header */}
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>
+                {editingReport ? "Edit ANC Record" : "Add ANC Record"}
+              </Text>
+              <TouchableOpacity
+                style={styles.modalCloseBtn}
+                onPress={() => setModalVisible(false)}
+              >
+                <Feather name="x" size={20} color="#0F172A" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {/* Visit date */}
+              <Text style={styles.inputLabel}>Visit Date</Text>
+              <TextInput
+                style={styles.input}
+                value={formData.date || ""}
+                onChangeText={(text) => setFormData((prev) => ({ ...prev, date: text }))}
+                placeholder="YYYY-MM-DD"
+                placeholderTextColor="#94A3B8"
+              />
+
+              {/* Live assessment preview */}
+              <Text style={styles.inputLabel}>Current Assessment</Text>
+              <View
+                style={[
+                  styles.assessmentCard,
+                  riskTone(formAssessment.riskBand) === "high"
+                    ? styles.assessmentHigh
+                    : riskTone(formAssessment.riskBand) === "medium"
+                    ? styles.assessmentMedium
+                    : styles.assessmentLow,
+                ]}
+              >
+                <Text style={styles.assessmentTitle}>{statusLabel(formAssessment)}</Text>
+                <Text style={styles.assessmentMeta}>
+                  {formAssessment.decision} · Score {formAssessment.score} · {formAssessment.referralLevel}
+                </Text>
+              </View>
+
+              {/* Numeric vitals */}
+              {ANC_NUMERIC_FIELDS.map((field) => (
+                <View key={field.key}>
+                  <Text style={styles.inputLabel}>{field.label}</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={toInputValue(formData[field.key])}
+                    onChangeText={(text) =>
+                      setFormData((prev) => ({ ...prev, [field.key]: sanitizeNumericInput(text) }))
+                    }
+                    keyboardType="decimal-pad"
+                    placeholder={field.placeholder}
+                    placeholderTextColor="#94A3B8"
+                  />
+                </View>
+              ))}
+
+              {/* Urine Protein */}
+              <Text style={styles.inputLabel}>Urine Protein</Text>
+              <View style={styles.pillRow}>
+                {URINE_PROTEIN_OPTIONS.map((option) => (
+                  <TouchableOpacity
+                    key={option}
+                    onPress={() => setFormData((prev) => ({ ...prev, urineProtein: option }))}
+                    style={[
+                      styles.pill,
+                      normalizeAncInputs(formData).urineProtein === option && styles.pillActive,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.pillText,
+                        normalizeAncInputs(formData).urineProtein === option && styles.pillTextActive,
+                      ]}
+                    >
+                      {option === 0 ? "0" : `${option}+`}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Boolean clinical flags */}
+              <Text style={styles.inputLabel}>Clinical Flags</Text>
+              {ANC_BOOLEAN_FIELDS.map((field) => {
+                const active = Boolean(formData[field.key]);
+                return (
+                  <TouchableOpacity
+                    key={field.key}
+                    onPress={() => setFormData((prev) => ({ ...prev, [field.key]: !active }))}
+                    style={[styles.toggleRow, active && styles.toggleRowActive]}
+                  >
+                    <Text style={[styles.toggleText, active && styles.toggleTextActive]}>
+                      {field.label}
+                    </Text>
+                    <View style={[styles.toggleBadge, active && styles.toggleBadgeActive]}>
+                      <Text style={[styles.toggleBadgeText, active && styles.toggleBadgeTextActive]}>
+                        {active ? "Yes" : "No"}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+
+              {/* Reasons */}
+              {formAssessment.reasons?.length > 0 && (
+                <>
+                  <Text style={styles.inputLabel}>Why This Prediction</Text>
+                  <View style={styles.reasonsWrap}>
+                    {formAssessment.reasons.map((reason, index) => (
+                      <View key={`${reason}-${index}`} style={styles.reasonRow}>
+                        <Feather name="chevron-right" size={14} color="#64748B" />
+                        <Text style={styles.reasonText}>{reason}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </>
+              )}
+
+              <TouchableOpacity style={styles.saveButton} onPress={handleSaveRecord}>
+                <Text style={styles.saveButtonText}>
+                  {editingReport ? "Update ANC Record" : "Save ANC Record"}
+                </Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
 
 // ─── EVENT CARD ───────────────────────────────────────────────────────────────
 
-function EventCard({ event, dimmed }) {
+function EventCard({ event, dimmed, onEdit }) {
   return (
-    <View style={[styles.eventCard, dimmed && { opacity: 0.65 }, event.type === "urgent" && styles.eventCardUrgent]}>
+    <View style={[styles.eventCard, dimmed && { opacity: 0.68 }, event.type === "urgent" && styles.eventCardUrgent]}>
       <View style={[styles.eventIconWrap, { backgroundColor: `${event.color}18` }]}>
         <Feather name={event.icon} size={18} color={event.color} />
       </View>
@@ -621,7 +866,16 @@ function EventCard({ event, dimmed }) {
         <Text style={styles.eventTitle}>{event.title}</Text>
         <Text style={styles.eventSubtitle}>{event.subtitle}</Text>
       </View>
-      <Text style={styles.eventDateText}>{event.date.getDate()} {MONTH_NAMES[event.date.getMonth()].slice(0,3)}</Text>
+      <View style={styles.eventRight}>
+        <Text style={styles.eventDateText}>
+          {event.date.getDate()} {MONTH_NAMES[event.date.getMonth()].slice(0, 3)}
+        </Text>
+        {onEdit && (
+          <TouchableOpacity style={styles.editBtn} onPress={onEdit}>
+            <Feather name="edit-2" size={14} color="#94A3B8" />
+          </TouchableOpacity>
+        )}
+      </View>
     </View>
   );
 }
@@ -641,6 +895,7 @@ function EmptyState({ icon, text }) {
 
 const ACCENT = "#6366F1";
 const URGENT = "#EF4444";
+const TEAL = "#5DC1B9";
 
 const styles = StyleSheet.create({
   safe: {
@@ -663,6 +918,11 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#0F172A",
   },
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
   iconBtn: {
     width: 38,
     height: 38,
@@ -676,6 +936,10 @@ const styles = StyleSheet.create({
   iconBtnActive: {
     backgroundColor: ACCENT,
     borderColor: ACCENT,
+  },
+  iconBtnAdd: {
+    borderColor: "#B2E5E1",
+    backgroundColor: "#F0FBFA",
   },
 
   // Tabs
@@ -1030,6 +1294,20 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#94A3B8",
   },
+  eventRight: {
+    alignItems: "flex-end",
+    gap: 6,
+  },
+  editBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: "#F1F5F9",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
 
   // Empty state
   emptyState: {
@@ -1041,5 +1319,175 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#94A3B8",
     fontWeight: "500",
+  },
+
+  // ── Modal (same as HealthRecordsScreen)
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(15, 23, 42, 0.45)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 26,
+    borderTopRightRadius: 26,
+    padding: 24,
+    maxHeight: "90%",
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#0F172A",
+  },
+  modalCloseBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#F1F5F9",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#64748B",
+    marginBottom: 8,
+    marginTop: 16,
+  },
+  input: {
+    backgroundColor: "#F8FAFC",
+    borderRadius: 12,
+    padding: 14,
+    fontSize: 15,
+    color: "#0F172A",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+  assessmentCard: {
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+  },
+  assessmentLow: {
+    backgroundColor: "#F0FDF4",
+    borderColor: "#BBF7D0",
+  },
+  assessmentMedium: {
+    backgroundColor: "#FFF7ED",
+    borderColor: "#FED7AA",
+  },
+  assessmentHigh: {
+    backgroundColor: "#FEF2F2",
+    borderColor: "#FECACA",
+  },
+  assessmentTitle: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#0F172A",
+  },
+  assessmentMeta: {
+    marginTop: 4,
+    color: "#475569",
+    fontSize: 13,
+  },
+  pillRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+    marginTop: 10,
+  },
+  pill: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: "#F1F5F9",
+  },
+  pillActive: {
+    backgroundColor: TEAL,
+  },
+  pillText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#64748B",
+  },
+  pillTextActive: {
+    color: "#FFFFFF",
+  },
+  toggleRow: {
+    marginTop: 10,
+    backgroundColor: "#F8FAFC",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 12,
+  },
+  toggleRowActive: {
+    backgroundColor: "#ECFDF5",
+    borderColor: "#86EFAC",
+  },
+  toggleText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#0F172A",
+  },
+  toggleTextActive: {
+    color: "#166534",
+  },
+  toggleBadge: {
+    backgroundColor: "#E2E8F0",
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  toggleBadgeActive: {
+    backgroundColor: "#16A34A",
+  },
+  toggleBadgeText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#334155",
+  },
+  toggleBadgeTextActive: {
+    color: "#FFFFFF",
+  },
+  reasonsWrap: {
+    marginTop: 10,
+    gap: 8,
+  },
+  reasonRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+  },
+  reasonText: {
+    flex: 1,
+    fontSize: 13,
+    color: "#334155",
+    lineHeight: 18,
+  },
+  saveButton: {
+    marginTop: 28,
+    backgroundColor: "#0F172A",
+    borderRadius: 16,
+    paddingVertical: 16,
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  saveButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
   },
 });

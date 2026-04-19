@@ -447,22 +447,42 @@ export default function ChatScreen({ route, navigation }) {
       )}
 
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
-      {toolsOpen ? <Pressable style={styles.toolsBackdrop} onPress={() => setToolsOpen(false)} /> : null}
 
       {/* ── Composer */}
       <View style={[styles.composerRow, offlineMode && styles.composerRowOffline]}>
-        {toolsOpen ? (
-          <View style={styles.toolsMenu}>
-            <View style={styles.toolItem}>
-              <Text style={styles.toolLabel}>YouTube</Text>
-              <Switch value={includeYouTube} onValueChange={setIncludeYouTube} trackColor={{ true: "#5DC1B9" }} />
+
+        {/* Tools popup — rendered inside composerRow so z-index works */}
+        {toolsOpen && (
+          <>
+            {/* Backdrop: closes menu on tap, sits below the menu card */}
+            <Pressable
+              style={styles.toolsBackdrop}
+              onPress={() => setToolsOpen(false)}
+            />
+            {/* Menu card: above the backdrop */}
+            <View style={styles.toolsMenu}>
+              <View style={styles.toolItem}>
+                <Text style={styles.toolLabel}>YouTube</Text>
+                <Switch
+                  value={includeYouTube}
+                  onValueChange={(val) => { setIncludeYouTube(val); }}
+                  trackColor={{ false: "#E2E8F0", true: "#5DC1B9" }}
+                  thumbColor="#FFFFFF"
+                />
+              </View>
+              <View style={styles.toolItemDivider} />
+              <View style={styles.toolItem}>
+                <Text style={styles.toolLabel}>Web Images</Text>
+                <Switch
+                  value={includeWebImages}
+                  onValueChange={(val) => { setIncludeWebImages(val); }}
+                  trackColor={{ false: "#E2E8F0", true: "#5DC1B9" }}
+                  thumbColor="#FFFFFF"
+                />
+              </View>
             </View>
-            <View style={styles.toolItem}>
-              <Text style={styles.toolLabel}>Web Images</Text>
-              <Switch value={includeWebImages} onValueChange={setIncludeWebImages} trackColor={{ true: "#5DC1B9" }} />
-            </View>
-          </View>
-        ) : null}
+          </>
+        )}
 
         <View style={[styles.inputContainer, offlineMode && styles.inputContainerOffline]}>
           {!offlineMode && (
@@ -806,28 +826,34 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   toolsBackdrop: {
-    ...StyleSheet.absoluteFillObject,
-    top: 0,
-    bottom: 0,
-    zIndex: 5,
+    position: "absolute",
+    top: -9999,
+    bottom: -9999,
+    left: -9999,
+    right: -9999,
+    zIndex: 10,
   },
   toolsMenu: {
     position: "absolute",
-    bottom: 72,
-    right: 70,
+    bottom: 64,
+    left: 8,
     backgroundColor: CARD,
     borderWidth: 1,
     borderColor: BORDER,
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    width: 210,
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    width: 220,
     zIndex: 20,
     shadowColor: "#000000",
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
     shadowOffset: { width: 0, height: 4 },
-    elevation: 6,
+    elevation: 8,
+  },
+  toolItemDivider: {
+    height: 1,
+    backgroundColor: BORDER,
   },
   toolItem: {
     flexDirection: "row",
