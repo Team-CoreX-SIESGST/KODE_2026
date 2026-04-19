@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
+  NativeModules,
   Pressable,
   SafeAreaView,
   ScrollView,
@@ -14,7 +15,25 @@ import { AuthContext } from "../context/AuthContext";
 import { patientMe } from "../services/api";
 import { buildVoiceAgentContext } from "../utils/voiceContext";
 
-const Vapi = Platform.OS === "web" ? null : require("@vapi-ai/react-native").default;
+function loadOptionalVapi() {
+  if (Platform.OS === "web") {
+    return null;
+  }
+
+  if (!NativeModules?.WebRTCModule) {
+    return null;
+  }
+
+  try {
+    const dynamicRequire = eval("require");
+    const loaded = dynamicRequire("@vapi-ai/react-native");
+    return loaded?.default || loaded || null;
+  } catch {
+    return null;
+  }
+}
+
+const Vapi = loadOptionalVapi();
 
 const VAPI_API_KEY = process.env.EXPO_PUBLIC_VAPI_API_KEY;
 const VAPI_AGENT_ID = process.env.EXPO_PUBLIC_VAPI_AGENT_ID;
@@ -128,7 +147,11 @@ export default function VapiCallScreen() {
     }
 
     if (!Vapi) {
-      setError("Direct Vapi calling needs a native Expo build, not web.");
+      setError(
+        Platform.OS === "web"
+          ? "Direct Vapi calling needs a native Expo build, not web."
+          : "Vapi voice calling needs a custom native build. This runtime does not expose WebRTCModule."
+      );
       return;
     }
 

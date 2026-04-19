@@ -36,7 +36,7 @@ const quickActions = [
 
 const bottomNavItems = [
   { label: "Home", icon: "home" },
-  { label: "Consult", icon: "message-circle", route: "PatientConsult" },
+  { label: "Chat", icon: "message-circle", route: "Chat" },
   { label: "Records", icon: "file-text", route: "HealthRecords" },
   { label: "Profile", icon: "user", route: "PatientProfile" },
 ];
